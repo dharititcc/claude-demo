@@ -1,0 +1,52 @@
+# ─── OS / Editor ───────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.iml
+
+# ─── Env / Secrets ─────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+auth.json
+
+# ─── Backend (Laravel) ─────────────────────────
+backend/vendor/
+backend/node_modules/
+backend/public/build/
+backend/public/hot
+backend/public/storage
+backend/storage/*.key
+backend/storage/app/*
+backend/storage/framework/cache/data/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
+backend/storage/logs/*
+backend/.phpunit.result.cache
+backend/.phpunit.cache/
+backend/.php-cs-fixer.cache
+backend/Homestead.json
+backend/Homestead.yaml
+
+# ─── Frontend (React/Vite) ─────────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/coverage/
+frontend/*.local
+
+# ─── Docker / Data ─────────────────────────────
+docker/mysql/data/
+docker/redis/data/
+.docker-data/
+
+# ─── Misc ──────────────────────────────────────
+coverage/
+*.log
+npm-debug.log*
+yarn-error.log*
