@@ -1,0 +1,4390 @@
+{
+    "info": {
+        "name": "SaaS Platform API v1",
+        "description": "Multi-tenant SaaS platform (Laravel 13). Generated from the OpenAPI spec.\n\n**Two headers do the work.** `Authorization: Bearer {{token}}` (set automatically by Register/Login) says who you are; `X-Organization: {{org_slug}}` says which organization to act in — required on every tenant-scoped request.\n\nPublic endpoints send no token. Query filters are included but disabled; enable the ones you need. Path variables (`:id`, `:customer`, …) default to placeholders — override them per request.\n\n`org_slug` defaults to `acme-inc` (a seeded demo organization from `php artisan app:demo`) so tenant-scoped requests work immediately. Running **Sign in** as a member overwrites it with that user's first organization. If you see *\"Organization context required\"*, `org_slug` is empty — set it or sign in first.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:8000",
+            "type": "string"
+        },
+        {
+            "key": "token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "org_slug",
+            "value": "acme-inc",
+            "type": "string"
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{token}}",
+                "type": "string"
+            }
+        ]
+    },
+    "item": [
+        {
+            "name": "Auth",
+            "item": [
+                {
+                    "name": "Verify an email address from a signed link",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/verify-email/:id/:hash",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "verify-email",
+                                ":id",
+                                ":hash"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "hash",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Verify an email address from a signed link\n\nSigned rather than authenticated: the link is clicked from a mail client, where no bearer token exists. The signature plus a hash of the current address proves ownership."
+                    }
+                },
+                {
+                    "name": "Re-send the verification email",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/email/resend",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "email",
+                                "resend"
+                            ]
+                        },
+                        "description": "Re-send the verification email\n\nRe-send the verification email to the signed-in user."
+                    }
+                },
+                {
+                    "name": "Request a password-reset link",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"user@example.test\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/forgot-password",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "forgot-password"
+                            ]
+                        },
+                        "description": "Request a password-reset link\n\nAlways returns the same message whether or not the address is registered, so this cannot be used to enumerate users. Rate limited to 6/minute."
+                    }
+                },
+                {
+                    "name": "Sign in",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const r = pm.response.json();",
+                                    "if (r.data && r.data.token) {",
+                                    "  pm.collectionVariables.set('token', r.data.token);",
+                                    "  if (r.data.organizations && r.data.organizations.length) pm.collectionVariables.set('org_slug', r.data.organizations[0].slug);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"user@example.test\",\n    \"password\": \"string\",\n    \"device_name\": \"Labels the session so it can be reviewed and revoked.\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/login",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "login"
+                            ]
+                        },
+                        "description": "Sign in\n\nReturns a token, or 202 with a challenge when the account has two-factor enabled. Five failed attempts per email+IP trigger a 15-minute lockout (429)."
+                    }
+                },
+                {
+                    "name": "Sign out of this device",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/logout",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "logout"
+                            ]
+                        },
+                        "description": "Sign out of this device\n\nRevokes only the token that made this request, so other devices stay signed in. Use the sessions endpoints to revoke elsewhere."
+                    }
+                },
+                {
+                    "name": "The authenticated user and the organizations they can switch between",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/me",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "me"
+                            ]
+                        },
+                        "description": "The authenticated user and the organizations they can switch between\n\nThe authenticated user plus the organizations they can switch between."
+                    }
+                },
+                {
+                    "name": "Change your password",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"current_password\": \"string\",\n    \"password\": \"string\",\n    \"password_confirmation\": \"string\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/password",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "password"
+                            ]
+                        },
+                        "description": "Change your password\n\nRequires the current password. Every other session is revoked on success, so a password change actually evicts an attacker who already holds a token; the calling device stays signed in."
+                    }
+                },
+                {
+                    "name": "Register a user and create their first organization",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const r = pm.response.json();",
+                                    "if (r.data && r.data.token) {",
+                                    "  pm.collectionVariables.set('token', r.data.token);",
+                                    "  if (r.data.organization) pm.collectionVariables.set('org_slug', r.data.organization.slug);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Ada Lovelace\",\n    \"email\": \"user@example.test\",\n    \"password\": \"Min 12 chars with mixed case, a number, and a symbol.\",\n    \"password_confirmation\": \"string\",\n    \"organization_name\": \"Acme Inc\",\n    \"timezone\": \"UTC\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/register",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "register"
+                            ]
+                        },
+                        "description": "Register a user and create their first organization\n\nCreates the user, provisions a dedicated database for the organization, seeds its roles, makes the caller its owner, and returns an API token. Rate limited to 6/minute."
+                    }
+                },
+                {
+                    "name": "Reset a password using an emailed token",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"token\": \"From the reset email\",\n    \"email\": \"user@example.test\",\n    \"password\": \"string\",\n    \"password_confirmation\": \"string\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/reset-password",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "reset-password"
+                            ]
+                        },
+                        "description": "Reset a password using an emailed token\n\nAll existing API tokens are revoked: a reset implies the account may have been compromised."
+                    }
+                },
+                {
+                    "name": "Active sessions (issued tokens)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/sessions",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "sessions"
+                            ]
+                        },
+                        "description": "Active sessions (issued tokens)\n\nLets a user spot unfamiliar devices and revoke them. The current session is flagged."
+                    }
+                },
+                {
+                    "name": "Revoke one session",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/sessions/:id",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "sessions",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Revoke one session\n\nScoped to your own tokens, so one user cannot sign another out."
+                    }
+                },
+                {
+                    "name": "Revoke every session except the current one",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/sessions/others",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "sessions",
+                                "others"
+                            ]
+                        },
+                        "description": "Revoke every session except the current one\n\nRevoke every session except the current one."
+                    }
+                },
+                {
+                    "name": "Recent authentication attempts",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/login-history",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "login-history"
+                            ]
+                        },
+                        "description": "Recent authentication attempts\n\nSuccesses and failures for the signed-in user. Paginated."
+                    }
+                },
+                {
+                    "name": "Complete a two-factor sign-in",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const r = pm.response.json();",
+                                    "if (r.data && r.data.token) pm.collectionVariables.set('token', r.data.token);"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"challenge_token\": \"From the 202 login response\",\n    \"code\": \"Six digits from the authenticator\",\n    \"recovery_code\": \"A single-use recovery code; destroyed once spent\",\n    \"device_name\": \"string\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/2fa/challenge",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "2fa",
+                                "challenge"
+                            ]
+                        },
+                        "description": "Complete a two-factor sign-in\n\nExchanges the challenge_token from a 202 login, plus either a TOTP code or a recovery code, for an API token. Send one of code or recovery_code. A wrong code does not burn the challenge, but five wrong codes destroy it and sign-in restarts from the password. A TOTP code works only once: its time step is recorded and re-presenting it is refused, so observing a code is not enough to reuse it inside its 30-second window."
+                    }
+                },
+                {
+                    "name": "Two-factor status",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/2fa",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "2fa"
+                            ]
+                        },
+                        "description": "Two-factor status\n\nReports whether enrolment is unstarted, pending confirmation, or active, and how many recovery codes remain. The secret itself is never returned here — only the enable step ever discloses it."
+                    }
+                },
+                {
+                    "name": "Disable two-factor authentication",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"password\": \"string\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/2fa",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "2fa"
+                            ]
+                        },
+                        "description": "Disable two-factor authentication\n\nRequires the account password: a stolen bearer token must not be enough to remove the factor that exists to survive a stolen password. Clears the secret and every recovery code."
+                    }
+                },
+                {
+                    "name": "Begin two-factor enrolment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/2fa/enable",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "2fa",
+                                "enable"
+                            ]
+                        },
+                        "description": "Begin two-factor enrolment\n\nReturns a secret and an otpauth:// URI to render as a QR code. This does NOT protect the account yet — call confirm with a code from the authenticator to finish. Calling this again discards any half-finished enrolment and issues a fresh secret, so an abandoned QR code cannot be confirmed later."
+                    }
+                },
+                {
+                    "name": "Finish enrolment and get recovery codes",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"Six digits from the authenticator\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/2fa/confirm",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "2fa",
+                                "confirm"
+                            ]
+                        },
+                        "description": "Finish enrolment and get recovery codes\n\nProves the authenticator works, and only then does 2FA start guarding sign-in. Recovery codes are returned here and are shown in full exactly once at this point; they are the way back in when the device is lost."
+                    }
+                },
+                {
+                    "name": "View remaining recovery codes",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/2fa/recovery-codes",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "2fa",
+                                "recovery-codes"
+                            ]
+                        },
+                        "description": "View remaining recovery codes\n\nCodes are stored encrypted rather than hashed precisely so they can be shown again here — a user who lost the list but still has their authenticator would otherwise have no way to recover one."
+                    }
+                },
+                {
+                    "name": "Replace the recovery codes",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"password\": \"string\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/2fa/recovery-codes",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "2fa",
+                                "recovery-codes"
+                            ]
+                        },
+                        "description": "Replace the recovery codes\n\nIssues a fresh set and invalidates every previous code — the correct move once a list has been printed, shared, or partially spent. Requires the password."
+                    }
+                },
+                {
+                    "name": "Stop impersonating",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/impersonation/stop",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "impersonation",
+                                "stop"
+                            ]
+                        },
+                        "description": "Stop impersonating\n\nRevokes the current impersonation token immediately — before its own expiry would — and records the end of the session. Returns 409 if the current token is an ordinary login rather than an impersonation session."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Admin",
+            "item": [
+                {
+                    "name": "Super Admin audit trail",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/admin/activity?action=&organization=&per_page=",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "admin",
+                                "activity"
+                            ],
+                            "query": [
+                                {
+                                    "key": "action",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": "e.g. organization.suspended"
+                                },
+                                {
+                                    "key": "organization",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": "Filter by target organization id"
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": ""
+                                }
+                            ]
+                        },
+                        "description": "Super Admin audit trail\n\nEvery suspend, edit, delete, restore, and purge, newest first. Central and cross-org — distinct from the per-organization activity log that lives inside each tenant database. Filterable by action and by target organization."
+                    }
+                },
+                {
+                    "name": "Impersonate a member of an organization",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"user_id\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/admin/organizations/:organization/impersonate",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "admin",
+                                "organizations",
+                                ":organization",
+                                "impersonate"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "organization",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Impersonate a member of an organization\n\nReturns a short-lived token that acts as the target user (an owner by default, or the named member) inside THIS organization only. The token cannot reach the admin API and cannot enter the target user's other organizations. A super admin can never be impersonated. Both start and stop are written to the admin audit trail."
+                    }
+                },
+                {
+                    "name": "List every organization",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/admin/organizations?search=&status=&plan=&from=&to=&sort=&per_page=",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "admin",
+                                "organizations"
+                            ],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": "Organization name, phone, or owner name/email"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": ""
+                                },
+                                {
+                                    "key": "plan",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": "Plan id or slug"
+                                },
+                                {
+                                    "key": "from",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": "Registered on/after (ISO date)"
+                                },
+                                {
+                                    "key": "to",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": "Registered on/before (ISO date)"
+                                },
+                                {
+                                    "key": "sort",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": "name|status|created_at|members_count; prefix - to reverse"
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": ""
+                                }
+                            ]
+                        },
+                        "description": "List every organization\n\nSuper-admin only. Central-context: reads across all organizations without entering any tenant database. Searchable by organization name, phone, or owner name/email; filterable by status, plan, and registration date; sortable on an allowlist. Cross-tenant metrics (projects, storage) are null until the Phase 2 stats rollup lands."
+                    }
+                },
+                {
+                    "name": "Platform-wide dashboard counters",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/admin/organizations/stats",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "admin",
+                                "organizations",
+                                "stats"
+                            ]
+                        },
+                        "description": "Platform-wide dashboard counters\n\nSuper-admin only. Organization counts by lifecycle state plus distinct users across the platform. Cross-tenant totals (projects, storage) are null pending the Phase 2 rollup — null means not-yet-measured, distinct from a real zero."
+                    }
+                },
+                {
+                    "name": "One organization in full",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/admin/organizations/:organization",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "admin",
+                                "organizations",
+                                ":organization"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "organization",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "One organization in full"
+                    }
+                },
+                {
+                    "name": "Edit an organization profile",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"string\",\n    \"phone\": \"string\",\n    \"timezone\": \"string\",\n    \"currency\": \"string\",\n    \"language\": \"string\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/admin/organizations/:organization",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "admin",
+                                "organizations",
+                                ":organization"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "organization",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Edit an organization profile\n\nThe slug is intentionally not editable — it is the identifier clients send in X-Organization, and changing it would break every integration. Status changes go through the suspend/activate endpoints, not this one."
+                    }
+                },
+                {
+                    "name": "Soft-delete an organization",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/admin/organizations/:organization",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "admin",
+                                "organizations",
+                                ":organization"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "organization",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Soft-delete an organization\n\nReversible. The central row is trashed — which cuts member access immediately — but the physical tenant database is KEPT, so the org can be restored. The database is only ever dropped later, by the tenants:purge command, after a retention window. A \"soft delete\" here never destroys data."
+                    }
+                },
+                {
+                    "name": "Override an organization's plan limits",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"overrides\": {\n        \"users\": 1,\n        \"customers\": 1,\n        \"storage_mb\": 1\n    }\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/admin/organizations/:organization/limits",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "admin",
+                                "organizations",
+                                ":organization",
+                                "limits"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "organization",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Override an organization's plan limits\n\nGive one organization different ceilings than its plan without inventing a bespoke plan. The body replaces the whole override map: a key present overrides the plan (an integer, or null for unlimited); a key absent falls back to the plan. Send an empty object to clear all overrides. All quota enforcement — uploads, record creation — honours these immediately."
+                    }
+                },
+                {
+                    "name": "Suspend an organization",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/admin/organizations/:organization/suspend",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "admin",
+                                "organizations",
+                                ":organization",
+                                "suspend"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "organization",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Suspend an organization\n\nCuts access immediately: the tenant middleware refuses a suspended organization on its next request, so no token needs to expire. Reversible via activate."
+                    }
+                },
+                {
+                    "name": "Reactivate a suspended organization",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/admin/organizations/:organization/activate",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "admin",
+                                "organizations",
+                                ":organization",
+                                "activate"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "organization",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Reactivate a suspended organization\n\nRestores to active, never to trial — reviving a spent trial would grant a second free run."
+                    }
+                },
+                {
+                    "name": "Restore a soft-deleted organization",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/admin/organizations/:organization/restore",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "admin",
+                                "organizations",
+                                ":organization",
+                                "restore"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "organization",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Restore a soft-deleted organization\n\nBrings a trashed organization and its members back online. Because the database was never dropped, nothing is re-provisioned — the data is exactly as it was left."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Organizations",
+            "item": [
+                {
+                    "name": "Organizations the caller belongs to",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/organizations",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "organizations"
+                            ]
+                        },
+                        "description": "Organizations the caller belongs to\n\nDrives the organization switcher. Needs no X-Organization header."
+                    }
+                },
+                {
+                    "name": "Create an additional organization",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Second Venture\",\n    \"timezone\": \"Europe/London\",\n    \"currency\": \"GBP\",\n    \"language\": \"en\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/organizations",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "organizations"
+                            ]
+                        },
+                        "description": "Create an additional organization\n\nProvisions a dedicated database, seeds its roles, and makes the caller its owner."
+                    }
+                },
+                {
+                    "name": "Update the active organization settings",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "name",
+                                    "type": "text",
+                                    "value": "string"
+                                },
+                                {
+                                    "key": "timezone",
+                                    "type": "text",
+                                    "value": "string"
+                                },
+                                {
+                                    "key": "currency",
+                                    "type": "text",
+                                    "value": "string"
+                                },
+                                {
+                                    "key": "language",
+                                    "type": "text",
+                                    "value": "string"
+                                },
+                                {
+                                    "key": "logo",
+                                    "type": "file",
+                                    "src": []
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/organization",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "organization"
+                            ]
+                        },
+                        "description": "Update the active organization settings\n\nPOST rather than PUT because the logo is a multipart upload, which PHP does not parse for PUT. The slug is immutable: it is the tenant identifier clients send in X-Organization."
+                    }
+                },
+                {
+                    "name": "Your role and permissions in the active organization",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/context",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "context"
+                            ]
+                        },
+                        "description": "Your role and permissions in the active organization\n\nThe SPA uses the permission list to show or hide controls. The API re-authorizes every request regardless, so this is never the security boundary."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Team",
+            "item": [
+                {
+                    "name": "Preview an invitation",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/invitations/:token",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "invitations",
+                                ":token"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "token",
+                                    "value": "<token>"
+                                }
+                            ]
+                        },
+                        "description": "Preview an invitation\n\nPublic: the recipient opens the emailed link before signing in, so the SPA must show which organization invited them and to which address. Returns no sensitive fields."
+                    }
+                },
+                {
+                    "name": "Accept an invitation",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/invitations/:token/accept",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "invitations",
+                                ":token",
+                                "accept"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "token",
+                                    "value": "<token>"
+                                }
+                            ]
+                        },
+                        "description": "Accept an invitation\n\nOutside tenant scope on purpose: the invitee is not a member yet, so the tenant middleware would reject them before they could join. Acceptance is bound to the invited address."
+                    }
+                },
+                {
+                    "name": "Members of the active organization",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/members",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "members"
+                            ]
+                        },
+                        "description": "Members of the active organization\n\nEach member is shown with the role they hold HERE. The same person may hold a different role in another organization."
+                    }
+                },
+                {
+                    "name": "Pending invitations",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/members/invitations",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "members",
+                                "invitations"
+                            ]
+                        },
+                        "description": "Pending invitations\n\nPending invitations for this organization."
+                    }
+                },
+                {
+                    "name": "Invite someone by email",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"user@example.test\",\n    \"role\": \"owner\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/members/invitations",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "members",
+                                "invitations"
+                            ]
+                        },
+                        "description": "Invite someone by email\n\nSends an emailed link with a single-use token valid for 7 days. Re-inviting the same address replaces the previous invitation. Owner can only be granted by an owner."
+                    }
+                },
+                {
+                    "name": "Revoke a pending invitation",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/members/invitations/:invitation",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "members",
+                                "invitations",
+                                ":invitation"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "invitation",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Revoke a pending invitation"
+                    }
+                },
+                {
+                    "name": "Change a member role in this organization",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"role\": \"owner\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/members/:user/role",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "members",
+                                ":user",
+                                "role"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "user",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Change a member role in this organization\n\nAn organization must always keep at least one owner; demoting the last one is refused."
+                    }
+                },
+                {
+                    "name": "Remove a member from this organization",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/members/:user",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "members",
+                                ":user"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "user",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Remove a member from this organization\n\nTheir role here is revoked; their other organizations are untouched. You cannot remove yourself, nor the last owner."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Dashboard",
+            "item": [
+                {
+                    "name": "Aggregate metrics for the active organization",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/dashboard",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "dashboard"
+                            ]
+                        },
+                        "description": "Aggregate metrics for the active organization\n\nCustomer totals and status breakdown, active-customer lifetime value, a zero-filled six-month growth series, and the five most recent customers. Cached for 5 minutes per organization."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Customers",
+            "item": [
+                {
+                    "name": "List customers in the active organization",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/customers?q=&status=&tag=&sort=&direction=&per_page=&page=",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "customers"
+                            ],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": "Search name, email, company, or phone"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": "Comma-separated statuses, e.g. active,lead"
+                                },
+                                {
+                                    "key": "tag",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": "Tag slug"
+                                },
+                                {
+                                    "key": "sort",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": ""
+                                },
+                                {
+                                    "key": "direction",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": ""
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": "Max 100"
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": ""
+                                }
+                            ]
+                        },
+                        "description": "List customers in the active organization\n\nPaginated list supporting search, filtering, and sorting."
+                    }
+                },
+                {
+                    "name": "Create a customer",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Wayne Enterprises\",\n    \"email\": \"string\",\n    \"phone\": \"string\",\n    \"company\": \"string\",\n    \"website\": \"string\",\n    \"status\": \"lead\",\n    \"lifetime_value\": 1,\n    \"tags\": [\n        \"vip\"\n    ]\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/customers",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "customers"
+                            ]
+                        },
+                        "description": "Create a customer"
+                    }
+                },
+                {
+                    "name": "One customer, with tags, notes, and attachments",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/customers/:customer",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "customers",
+                                ":customer"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "customer",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "One customer, with tags, notes, and attachments"
+                    }
+                },
+                {
+                    "name": "Update a customer",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"string\",\n    \"email\": \"string\",\n    \"phone\": \"string\",\n    \"company\": \"string\",\n    \"status\": \"lead\",\n    \"lifetime_value\": 1,\n    \"tags\": [\n        \"string\"\n    ]\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/customers/:customer",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "customers",
+                                ":customer"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "customer",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Update a customer\n\nPartial update. Omitting `tags` leaves them unchanged; sending an empty array removes them all."
+                    }
+                },
+                {
+                    "name": "Delete a customer (soft)",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/customers/:customer",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "customers",
+                                ":customer"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "customer",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Delete a customer (soft)\n\nSoft delete: recoverable via the restore endpoint."
+                    }
+                },
+                {
+                    "name": "Restore a soft-deleted customer",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/customers/:id/restore",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "customers",
+                                ":id",
+                                "restore"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Restore a soft-deleted customer"
+                    }
+                },
+                {
+                    "name": "Export the current selection as CSV",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/customers/export?q=&status=&tag=",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "customers",
+                                "export"
+                            ],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": ""
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": "Comma-separated"
+                                },
+                                {
+                                    "key": "tag",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": ""
+                                }
+                            ]
+                        },
+                        "description": "Export the current selection as CSV\n\nStreamed and chunked, so a large organization does not exhaust memory. Accepts the same filters as the list endpoint."
+                    }
+                },
+                {
+                    "name": "Import customers from a CSV",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "file",
+                                    "type": "file",
+                                    "src": []
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/customers/import",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "customers",
+                                "import"
+                            ]
+                        },
+                        "description": "Import customers from a CSV\n\nRows are validated individually: a bad row is reported and skipped rather than aborting the whole file. A `name` column is required."
+                    }
+                },
+                {
+                    "name": "Add a note to a customer",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"body\": \"string\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/customers/:customer/notes",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "customers",
+                                ":customer",
+                                "notes"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "customer",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Add a note to a customer\n\nAttach a note to a customer."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Projects",
+            "item": [
+                {
+                    "name": "List projects",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/projects?q=&status=&customer_id=&overdue=&sort=&direction=&per_page=",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "projects"
+                            ],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": ""
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": ""
+                                },
+                                {
+                                    "key": "customer_id",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": ""
+                                },
+                                {
+                                    "key": "overdue",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": ""
+                                },
+                                {
+                                    "key": "sort",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": ""
+                                },
+                                {
+                                    "key": "direction",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": ""
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": ""
+                                }
+                            ]
+                        },
+                        "description": "List projects\n\nIncludes task counts and a progress percentage, loaded with withCount so a list does not fire a query per project."
+                    }
+                },
+                {
+                    "name": "Create a project",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"string\",\n    \"description\": \"string\",\n    \"status\": \"planning\",\n    \"color\": \"#6366f1\",\n    \"customer_id\": 1,\n    \"starts_on\": \"2026-01-01\",\n    \"due_on\": \"2026-01-01\",\n    \"budget\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/projects",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "projects"
+                            ]
+                        },
+                        "description": "Create a project\n\nOwnership defaults to the creator. Setting status to completed stamps completed_at automatically."
+                    }
+                },
+                {
+                    "name": "One project with members and attachments",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/projects/:project",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "projects",
+                                ":project"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "project",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "One project with members and attachments"
+                    }
+                },
+                {
+                    "name": "Update a project",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"string\",\n    \"status\": \"planning\",\n    \"due_on\": \"2026-01-01\",\n    \"budget\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/projects/:project",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "projects",
+                                ":project"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "project",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Update a project\n\nstatus and completed_at are kept in step: marking complete stamps the date, reopening clears it."
+                    }
+                },
+                {
+                    "name": "Delete a project (soft)",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/projects/:project",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "projects",
+                                ":project"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "project",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Delete a project (soft)\n\nTasks are left intact so the project can be restored; cascading would orphan their time entries."
+                    }
+                },
+                {
+                    "name": "Restore a soft-deleted project",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/projects/:id/restore",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "projects",
+                                ":id",
+                                "restore"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Restore a soft-deleted project"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Tasks",
+            "item": [
+                {
+                    "name": "List tasks",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/tasks?project_id=&status=&priority=&assignee_id=&search=&due_before=&due_after=&sort=&per_page=",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "tasks"
+                            ],
+                            "query": [
+                                {
+                                    "key": "project_id",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": ""
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": "todo, in_progress, review, done"
+                                },
+                                {
+                                    "key": "priority",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": "low, medium, high, urgent"
+                                },
+                                {
+                                    "key": "assignee_id",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": ""
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": "Matches title and description"
+                                },
+                                {
+                                    "key": "due_before",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": "ISO date"
+                                },
+                                {
+                                    "key": "due_after",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": "ISO date"
+                                },
+                                {
+                                    "key": "sort",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": "Allowlisted column; prefix with - to reverse"
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": ""
+                                }
+                            ]
+                        },
+                        "description": "List tasks\n\nThe flat, paginated view behind the table and calendar. Use /tasks/board for the Kanban shape. Sorting is restricted to an allowlist of columns rather than passed through to the query."
+                    }
+                },
+                {
+                    "name": "Create a task",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"title\": \"string\",\n    \"description\": \"string\",\n    \"project_id\": 1,\n    \"status\": \"todo\",\n    \"priority\": \"low\",\n    \"assignee_id\": 1,\n    \"parent_id\": 1,\n    \"due_date\": \"2026-01-01\",\n    \"estimated_hours\": 1,\n    \"tags\": [\n        \"string\"\n    ]\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/tasks",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "tasks"
+                            ]
+                        },
+                        "description": "Create a task\n\nA task with a parent_id is a subtask. Creation counts against the plan task quota, which is why the failure here is 402 rather than 403: the caller is permitted, the plan is not."
+                    }
+                },
+                {
+                    "name": "Tasks grouped into Kanban columns",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/tasks/board?project_id=&assignee_id=",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "tasks",
+                                "board"
+                            ],
+                            "query": [
+                                {
+                                    "key": "project_id",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": ""
+                                },
+                                {
+                                    "key": "assignee_id",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": ""
+                                }
+                            ]
+                        },
+                        "description": "Tasks grouped into Kanban columns\n\nEvery column is returned even when empty, so the board renders its full shape. One query for the whole board, grouped in PHP."
+                    }
+                },
+                {
+                    "name": "One task with subtasks, comments, and time entries",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/tasks/:task",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "tasks",
+                                ":task"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "task",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "One task with subtasks, comments, and time entries"
+                    }
+                },
+                {
+                    "name": "Update a task",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"title\": \"string\",\n    \"description\": \"string\",\n    \"status\": \"todo\",\n    \"priority\": \"low\",\n    \"assignee_id\": 1,\n    \"due_on\": \"2026-01-01\",\n    \"estimated_minutes\": 1,\n    \"labels\": [\n        \"string\"\n    ]\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/tasks/:task",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "tasks",
+                                ":task"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "task",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Update a task\n\nSetting status to done stamps completed_at; moving away from done clears it."
+                    }
+                },
+                {
+                    "name": "Delete a task (soft)",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/tasks/:task",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "tasks",
+                                ":task"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "task",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Delete a task (soft)\n\nSubtasks are soft-deleted with the parent, so they do not resurface at the root of the board."
+                    }
+                },
+                {
+                    "name": "Move a card on the Kanban board",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"status\": \"todo\",\n    \"before_id\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/tasks/:task/move",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "tasks",
+                                ":task",
+                                "move"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "task",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Move a card on the Kanban board\n\nPositions are floats: a card dropped between two others takes their midpoint, so a drag writes one row rather than renumbering the column. Omit before_id to append to the end."
+                    }
+                },
+                {
+                    "name": "Start a timer on a task",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"description\": \"string\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/tasks/:task/time/start",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "tasks",
+                                ":task",
+                                "time",
+                                "start"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "task",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Start a timer on a task\n\nA user has at most one running timer; starting a new one stops any other. MySQL has no partial unique index, so this is enforced in the application."
+                    }
+                },
+                {
+                    "name": "Stop your running timer on a task",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/tasks/:task/time/stop",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "tasks",
+                                ":task",
+                                "time",
+                                "stop"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "task",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Stop your running timer on a task"
+                    }
+                },
+                {
+                    "name": "Log time after the fact",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"minutes\": 1,\n    \"description\": \"string\",\n    \"billable\": true\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/tasks/:task/time/log",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "tasks",
+                                ":task",
+                                "time",
+                                "log"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "task",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Log time after the fact\n\nRecords a completed entry without running a timer. The start is back-dated so the entry occupies real time on a timeline."
+                    }
+                },
+                {
+                    "name": "Your currently running timer, if any",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/timer/running",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "timer",
+                                "running"
+                            ]
+                        },
+                        "description": "Your currently running timer, if any\n\nDrives the persistent timer widget. Returns null when nothing is running."
+                    }
+                },
+                {
+                    "name": "Time entries for a task",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/tasks/:task/time",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "tasks",
+                                ":task",
+                                "time"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "task",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Time entries for a task\n\nEntries for a task."
+                    }
+                },
+                {
+                    "name": "Remove a time entry",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/tasks/:task/time/:entry",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "tasks",
+                                ":task",
+                                "time",
+                                ":entry"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "task",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "entry",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Remove a time entry\n\nYou may only remove your own time unless you can delete tasks: a timesheet is a billing record, so one person must not quietly rewrite anothers."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Calendar",
+            "item": [
+                {
+                    "name": "Calendar occurrences in a date window",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/events?from=&to=&project_id=",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "events"
+                            ],
+                            "query": [
+                                {
+                                    "key": "from",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": "Required. Window start (date)"
+                                },
+                                {
+                                    "key": "to",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": "Required. Window end; max one year after from"
+                                },
+                                {
+                                    "key": "project_id",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": ""
+                                }
+                            ]
+                        },
+                        "description": "Calendar occurrences in a date window\n\nReturns EXPANDED occurrences, not rows: a recurring series is one row but many occurrences. The window is capped at one year so a malformed rule cannot expand unbounded."
+                    }
+                },
+                {
+                    "name": "Create an event or recurring series",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"title\": \"string\",\n    \"description\": \"string\",\n    \"location\": \"string\",\n    \"type\": \"event\",\n    \"starts_at\": \"2026-01-01T09:00:00Z\",\n    \"ends_at\": \"2026-01-01T09:00:00Z\",\n    \"all_day\": true,\n    \"recurrence_frequency\": \"daily\",\n    \"recurrence_interval\": 1,\n    \"recurrence_by_day\": [\n        \"MO\",\n        \"WE\"\n    ],\n    \"recurrence_until\": \"2026-01-01T09:00:00Z\",\n    \"recurrence_count\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/events",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "events"
+                            ]
+                        },
+                        "description": "Create an event or recurring series\n\nRecurrence is stored as a rule and expanded on read. Omit recurrence_frequency for a one-off."
+                    }
+                },
+                {
+                    "name": "One event row with attendees and reminders",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/events/:event",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "events",
+                                ":event"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "event",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "One event row with attendees and reminders"
+                    }
+                },
+                {
+                    "name": "Update an event or series",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"title\": \"string\",\n    \"starts_at\": \"2026-01-01T09:00:00Z\",\n    \"ends_at\": \"2026-01-01T09:00:00Z\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/events/:event",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "events",
+                                ":event"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "event",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Update an event or series\n\nUpdates the whole series. To change one occurrence only, use the occurrence endpoint."
+                    }
+                },
+                {
+                    "name": "Delete an event or series",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/events/:event",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "events",
+                                ":event"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "event",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Delete an event or series"
+                    }
+                },
+                {
+                    "name": "Cancel or move ONE occurrence of a series",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"original_starts_at\": \"2026-01-01T09:00:00Z\",\n    \"cancel\": true,\n    \"starts_at\": \"2026-01-01T09:00:00Z\",\n    \"ends_at\": \"2026-01-01T09:00:00Z\",\n    \"title\": \"string\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/events/:event/occurrence",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "events",
+                                ":event",
+                                "occurrence"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "event",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Cancel or move ONE occurrence of a series\n\nCreates an exception row keyed to the occurrence original start; the expander then skips the generated one. The rest of the series is untouched."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Files",
+            "item": [
+                {
+                    "name": "Attach a file to a customer",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "file",
+                                    "type": "file",
+                                    "src": []
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/customers/:customer/attachments",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "customers",
+                                ":customer",
+                                "attachments"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "customer",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Attach a file to a customer\n\nExecutable and script types are refused regardless of the MIME type claimed, because the browser-reported type is attacker-controlled and an .html or .svg served from our origin is stored XSS. The stored path is generated; the original filename is kept only as a label."
+                    }
+                },
+                {
+                    "name": "Delete an attachment",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/customers/:customer/attachments/:attachment",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "customers",
+                                ":customer",
+                                "attachments",
+                                ":attachment"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "customer",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "attachment",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Delete an attachment\n\nScoped to the customer, so an id from another record cannot be deleted. Removes the stored bytes as well as the row."
+                    }
+                },
+                {
+                    "name": "Browse a folder",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/files?folder_id=",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "files"
+                            ],
+                            "query": [
+                                {
+                                    "key": "folder_id",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": "Omit for the root folder"
+                                }
+                            ]
+                        },
+                        "description": "Browse a folder\n\nContents of a folder (root when folder_id is omitted), a breadcrumb built from the materialised path, and a storage summary for the quota bar."
+                    }
+                },
+                {
+                    "name": "Upload a file",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "file",
+                                    "type": "file",
+                                    "src": []
+                                },
+                                {
+                                    "key": "folder_id",
+                                    "type": "text",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/files",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "files"
+                            ]
+                        },
+                        "description": "Upload a file\n\nEnforces the plan storage quota (402 when it would be exceeded) and refuses executable or script types regardless of the MIME type claimed. The stored path is generated, never the client filename."
+                    }
+                },
+                {
+                    "name": "Download a file",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/files/:file/download",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "files",
+                                ":file",
+                                "download"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "file",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Download a file"
+                    }
+                },
+                {
+                    "name": "Delete a file (soft)",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/files/:file",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "files",
+                                ":file"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "file",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Delete a file (soft)\n\nSoft delete: the bytes stay until the record is force-deleted, so a restore does not hand back a row pointing at nothing."
+                    }
+                },
+                {
+                    "name": "Create a folder",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"string\",\n    \"parent_id\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/folders",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "folders"
+                            ]
+                        },
+                        "description": "Create a folder"
+                    }
+                },
+                {
+                    "name": "Delete a folder and its subtree",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/folders/:folder",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "folders",
+                                ":folder"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "folder",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Delete a folder and its subtree"
+                    }
+                },
+                {
+                    "name": "Create a public share link",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"expires_in_days\": 1,\n    \"password\": \"Optional gate\",\n    \"max_downloads\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/files/:file/share",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "files",
+                                ":file",
+                                "share"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "file",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Create a public share link\n\nThe token is returned only in the URL and stored hashed. The organization slug is part of the link because a public visitor sends no header that could say which tenant database holds the share."
+                    }
+                },
+                {
+                    "name": "Share metadata",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/public/shares/:organization/:token",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "public",
+                                "shares",
+                                ":organization",
+                                ":token"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "organization",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "token",
+                                    "value": "<token>"
+                                }
+                            ]
+                        },
+                        "description": "Share metadata\n\nPublic. Lets the download page render (and prompt for a password when required) before fetching the bytes. Tenancy is resolved from the organization slug in the path."
+                    }
+                },
+                {
+                    "name": "Download a shared file",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"password\": \"Required when the share is password-protected\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/public/shares/:organization/:token/download",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "public",
+                                "shares",
+                                ":organization",
+                                ":token",
+                                "download"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "organization",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "token",
+                                    "value": "<token>"
+                                }
+                            ]
+                        },
+                        "description": "Download a shared file\n\nPublic. POST rather than GET so a password can be supplied in the body. Increments the download counter."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Notifications",
+            "item": [
+                {
+                    "name": "Your in-app notifications for the active organization",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/notifications?limit=",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "notifications"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": "Default 30"
+                                }
+                            ]
+                        },
+                        "description": "Your in-app notifications for the active organization\n\nNotifications live in the tenant database, so the same user has a separate inbox per organization: activity in one org never appears in another."
+                    }
+                },
+                {
+                    "name": "Mark one notification as read",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/notifications/:id/read",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "notifications",
+                                ":id",
+                                "read"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Mark one notification as read"
+                    }
+                },
+                {
+                    "name": "Mark every notification as read",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/notifications/read-all",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "notifications",
+                                "read-all"
+                            ]
+                        },
+                        "description": "Mark every notification as read"
+                    }
+                },
+                {
+                    "name": "Remove a notification",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/notifications/:id",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "notifications",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Remove a notification"
+                    }
+                },
+                {
+                    "name": "List webhook endpoints",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/webhooks",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "webhooks"
+                            ]
+                        },
+                        "description": "List webhook endpoints\n\nSecrets are never returned here: like an API key, the secret is shown once at creation only."
+                    }
+                },
+                {
+                    "name": "Create a webhook endpoint",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"url\": \"https://example.test/hook\",\n    \"events\": [\n        \"customer.created\"\n    ]\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/webhooks",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "webhooks"
+                            ]
+                        },
+                        "description": "Create a webhook endpoint\n\nReturns the signing secret ONCE. Deliveries are signed with HMAC-SHA256 over the exact body in an X-Signature header, so a receiver can prove the payload is ours."
+                    }
+                },
+                {
+                    "name": "Update a webhook endpoint",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"url\": \"https://example.test/hook\",\n    \"events\": [\n        \"string\"\n    ],\n    \"is_active\": true\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/webhooks/:webhook",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "webhooks",
+                                ":webhook"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "webhook",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Update a webhook endpoint\n\nRe-enabling an endpoint that was auto-paused resets its failure count, so it does not pause again on the next failure regardless of the fix."
+                    }
+                },
+                {
+                    "name": "Remove a webhook endpoint",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/webhooks/:webhook",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "webhooks",
+                                ":webhook"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "webhook",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Remove a webhook endpoint"
+                    }
+                },
+                {
+                    "name": "Recent delivery attempts",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/webhooks/:webhook/deliveries",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "webhooks",
+                                ":webhook",
+                                "deliveries"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "webhook",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Recent delivery attempts\n\nThe debugging view: status code, error, and attempt number for the last 50 deliveries."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Billing",
+            "item": [
+                {
+                    "name": "Available plans",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/billing/plans",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "billing",
+                                "plans"
+                            ]
+                        },
+                        "description": "Available plans\n\nAmounts are for display only; Stripe is the source of truth for what is actually charged. Stripe price ids are never exposed. A null limit means unlimited, which is different from 0."
+                    }
+                },
+                {
+                    "name": "Subscription, usage, and payment method",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/billing",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "billing"
+                            ]
+                        },
+                        "description": "Subscription, usage, and payment method\n\nRenders entirely from local state: an organization that has never paid has no Stripe customer, and the billing page must not depend on Stripe uptime."
+                    }
+                },
+                {
+                    "name": "A Stripe SetupIntent client secret",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/billing/setup-intent",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "billing",
+                                "setup-intent"
+                            ]
+                        },
+                        "description": "A Stripe SetupIntent client secret\n\nStripe.js uses this to collect card details in the browser. Raw card data never touches our servers, which is what keeps this application out of PCI scope."
+                    }
+                },
+                {
+                    "name": "Start a subscription",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"plan\": \"Plan slug\",\n    \"interval\": \"monthly\",\n    \"payment_method\": \"Stripe payment-method id\",\n    \"coupon\": \"string\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/billing/subscribe",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "billing",
+                                "subscribe"
+                            ]
+                        },
+                        "description": "Start a subscription\n\npayment_method is a Stripe payment-method id from Stripe.js, never a card number. Remaining trial is preserved rather than restarted, and an organization that already subscribed once does not get a second free trial."
+                    }
+                },
+                {
+                    "name": "Change plan or billing interval",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"plan\": \"Plan slug\",\n    \"interval\": \"monthly\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/billing/subscription",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "billing",
+                                "subscription"
+                            ]
+                        },
+                        "description": "Change plan or billing interval\n\nProration is invoiced immediately rather than accruing silently onto the next invoice: an upgrade the customer just chose should not surprise them a month later."
+                    }
+                },
+                {
+                    "name": "Cancel at the end of the period",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/billing/subscription",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "billing",
+                                "subscription"
+                            ]
+                        },
+                        "description": "Cancel at the end of the period\n\nAccess continues until the period ends (the grace period): cancelling must not destroy access already paid for. Use resume to undo."
+                    }
+                },
+                {
+                    "name": "Resume a cancelled subscription",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/billing/subscription/resume",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "billing",
+                                "subscription",
+                                "resume"
+                            ]
+                        },
+                        "description": "Resume a cancelled subscription\n\nOnly possible during the grace period; afterwards a new subscription is required."
+                    }
+                },
+                {
+                    "name": "Invoice history",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/billing/invoices",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "billing",
+                                "invoices"
+                            ]
+                        },
+                        "description": "Invoice history\n\nRead live from Stripe rather than kept as our own copy of records Stripe owns. Empty for an organization with no Stripe customer."
+                    }
+                },
+                {
+                    "name": "Download an invoice PDF",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/billing/invoices/:invoice",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "billing",
+                                "invoices",
+                                ":invoice"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "invoice",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Download an invoice PDF\n\nStream a single invoice PDF."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Audit",
+            "item": [
+                {
+                    "name": "The organization audit trail",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Organization",
+                                "value": "{{org_slug}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/audit-logs?log_name=&event=&causer_id=&from=&to=&per_page=",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "audit-logs"
+                            ],
+                            "query": [
+                                {
+                                    "key": "log_name",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": "Table name, e.g. customers"
+                                },
+                                {
+                                    "key": "event",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": "created, updated, deleted, restored"
+                                },
+                                {
+                                    "key": "causer_id",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": ""
+                                },
+                                {
+                                    "key": "from",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": ""
+                                },
+                                {
+                                    "key": "to",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": ""
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": ""
+                                }
+                            ]
+                        },
+                        "description": "The organization audit trail\n\nRead-only by design: an audit log you can edit is not an audit log. Entries live in the tenant database, so the trail is naturally scoped to one organization. Updates record only the fields that actually changed."
+                    }
+                }
+            ]
+        }
+    ]
+}

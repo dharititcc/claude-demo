@@ -2,28 +2,22 @@
 
 declare(strict_types=1);
 
-use Illuminate\Support\Facades\Route;
-use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
-use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
-
 /*
 |--------------------------------------------------------------------------
 | Tenant Routes
 |--------------------------------------------------------------------------
 |
-| Here you can register the tenant routes for your application.
-| These routes are loaded by the TenantRouteServiceProvider.
+| Intentionally empty.
 |
-| Feel free to customize them however you want. Good luck!
+| This application does NOT use domain- or subdomain-based tenancy. A tenant is
+| identified by the `X-Organization` header on the API, resolved by the
+| `tenant` middleware (App\Http\Middleware\InitializeTenancyForUser) in
+| routes/api.php. Tenant-scoped endpoints therefore live in routes/api.php, not
+| here.
+|
+| The stancl scaffolding registers a domain-identified `/` route by default;
+| left in place it collides with the application root and throws
+| TenantCouldNotBeIdentifiedOnDomainException for any host that is not a
+| registered tenant domain. It is removed deliberately.
 |
 */
-
-Route::middleware([
-    'web',
-    InitializeTenancyByDomain::class,
-    PreventAccessFromCentralDomains::class,
-])->group(function () {
-    Route::get('/', function () {
-        return 'This is your multi-tenant application. The id of the current tenant is ' . tenant('id');
-    });
-});

@@ -10,7 +10,7 @@
 
 **Do not open a public GitHub issue for security vulnerabilities.**
 
-Email **support@itcc.co** with:
+
 
 - A description of the vulnerability and its impact.
 - Steps to reproduce (proof of concept if possible).

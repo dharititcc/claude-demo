@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Super Admin Organization Management — Platform Presentation</title>
+<style>
+  :root {
+    --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, monospace;
+
+    /* Light — cool slate ground, cobalt signal accent */
+    --bg: #eef0f4;
+    --surface: #ffffff;
+    --surface-2: #f7f8fb;
+    --ink: #10141c;
+    --ink-2: #33404f;
+    --muted: #5c6673;
+    --line: #e0e4ea;
+    --line-strong: #ccd2dc;
+    --accent: #2846cf;
+    --accent-ink: #1c34a6;
+    --accent-soft: rgba(40, 70, 207, 0.09);
+    --ok: #0c9466;
+    --ok-soft: rgba(12, 148, 102, 0.12);
+    --warn: #a86808;
+    --warn-soft: rgba(168, 104, 8, 0.13);
+    --crit: #c93a3a;
+    --crit-soft: rgba(201, 58, 58, 0.11);
+    --shadow: 0 1px 2px rgba(16, 20, 28, 0.04), 0 12px 30px -18px rgba(16, 20, 28, 0.22);
+    --grid: rgba(16, 20, 28, 0.045);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0a0d13;
+      --surface: #11151e;
+      --surface-2: #161b25;
+      --ink: #eceff4;
+      --ink-2: #c2cad6;
+      --muted: #929cad;
+      --line: #212834;
+      --line-strong: #2c3542;
+      --accent: #6b8bff;
+      --accent-ink: #93abff;
+      --accent-soft: rgba(107, 139, 255, 0.14);
+      --ok: #35c78f;
+      --ok-soft: rgba(53, 199, 143, 0.15);
+      --warn: #e0a544;
+      --warn-soft: rgba(224, 165, 68, 0.15);
+      --crit: #f0716a;
+      --crit-soft: rgba(240, 113, 106, 0.14);
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 18px 40px -20px rgba(0, 0, 0, 0.7);
+      --grid: rgba(255, 255, 255, 0.04);
+    }
+  }
+
+  /* Viewer toggle wins in both directions */
+  :root[data-theme="light"] {
+    --bg: #eef0f4; --surface: #ffffff; --surface-2: #f7f8fb;
+    --ink: #10141c; --ink-2: #33404f; --muted: #5c6673;
+    --line: #e0e4ea; --line-strong: #ccd2dc;
+    --accent: #2846cf; --accent-ink: #1c34a6; --accent-soft: rgba(40, 70, 207, 0.09);
+    --ok: #0c9466; --ok-soft: rgba(12, 148, 102, 0.12);
+    --warn: #a86808; --warn-soft: rgba(168, 104, 8, 0.13);
+    --crit: #c93a3a; --crit-soft: rgba(201, 58, 58, 0.11);
+    --shadow: 0 1px 2px rgba(16, 20, 28, 0.04), 0 12px 30px -18px rgba(16, 20, 28, 0.22);
+    --grid: rgba(16, 20, 28, 0.045);
+  }
+  :root[data-theme="dark"] {
+    --bg: #0a0d13; --surface: #11151e; --surface-2: #161b25;
+    --ink: #eceff4; --ink-2: #c2cad6; --muted: #929cad;
+    --line: #212834; --line-strong: #2c3542;
+    --accent: #6b8bff; --accent-ink: #93abff; --accent-soft: rgba(107, 139, 255, 0.14);
+    --ok: #35c78f; --ok-soft: rgba(53, 199, 143, 0.15);
+    --warn: #e0a544; --warn-soft: rgba(224, 165, 68, 0.15);
+    --crit: #f0716a; --crit-soft: rgba(240, 113, 106, 0.14);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 18px 40px -20px rgba(0, 0, 0, 0.7);
+    --grid: rgba(255, 255, 255, 0.04);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Scroll progress bar */
+  .progress {
+    position: fixed; top: 0; left: 0; right: 0; height: 3px;
+    background: transparent; z-index: 100;
+  }
+  .progress__fill {
+    height: 100%; width: 0%;
+    background: var(--accent);
+    transition: width 0.08s linear;
+  }
+
+  /* Section rail (desktop) */
+  .rail {
+    position: fixed; left: 26px; top: 50%; transform: translateY(-50%);
+    display: none; flex-direction: column; gap: 14px; z-index: 90;
+  }
+  .rail a {
+    display: flex; align-items: center; gap: 10px;
+    text-decoration: none; color: var(--muted);
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.02em;
+  }
+  .rail a::before {
+    content: ""; width: 9px; height: 9px; border-radius: 50%;
+    border: 1.5px solid var(--line-strong); background: var(--surface);
+    transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  }
+  .rail a .rail__label { opacity: 0; transform: translateX(-4px); transition: opacity 0.2s, transform 0.2s; }
+  .rail a:hover .rail__label { opacity: 1; transform: translateX(0); }
+  .rail a.active { color: var(--accent-ink); }
+  .rail a.active::before { background: var(--accent); border-color: var(--accent); transform: scale(1.15); }
+  .rail a.active .rail__label { opacity: 1; transform: translateX(0); }
+  @media (min-width: 1180px) { .rail { display: flex; } }
+
+  main { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+
+  section {
+    padding: 92px 0;
+    border-top: 1px solid var(--line);
+  }
+  section:first-of-type { border-top: none; }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--accent-ink);
+    margin: 0 0 18px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .eyebrow::before {
+    content: ""; width: 26px; height: 1.5px; background: var(--accent);
+  }
+
+  h1 {
+    font-size: clamp(2.3rem, 6vw, 4.1rem);
+    line-height: 1.02; font-weight: 800; letter-spacing: -0.03em;
+    margin: 0; text-wrap: balance;
+  }
+  h2 {
+    font-size: clamp(1.7rem, 3.6vw, 2.6rem);
+    line-height: 1.08; font-weight: 780; letter-spacing: -0.025em;
+    margin: 0 0 20px; text-wrap: balance;
+  }
+  h3 { font-size: 1.06rem; font-weight: 700; letter-spacing: -0.01em; margin: 0; }
+
+  p { margin: 0 0 16px; color: var(--ink-2); max-width: 66ch; }
+  .lead { font-size: 1.16rem; color: var(--ink-2); max-width: 60ch; }
+  .muted { color: var(--muted); }
+  strong { color: var(--ink); font-weight: 680; }
+  .accent { color: var(--accent-ink); }
+
+  /* ---------- Cover ---------- */
+  .cover {
+    min-height: 100svh; display: flex; flex-direction: column; justify-content: center;
+    position: relative; overflow: hidden; border-top: none;
+    padding: 80px 0;
+  }
+  .cover__grid {
+    position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 44px 44px;
+    -webkit-mask-image: radial-gradient(ellipse 80% 65% at 30% 40%, #000 30%, transparent 78%);
+    mask-image: radial-gradient(ellipse 80% 65% at 30% 40%, #000 30%, transparent 78%);
+  }
+  .cover > * { position: relative; z-index: 1; }
+  .cover .kicker {
+    font-family: var(--font-mono); font-size: 12.5px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--muted); margin: 0 0 26px;
+  }
+  .cover h1 { max-width: 15ch; }
+  .cover .sub { font-size: 1.2rem; color: var(--ink-2); max-width: 54ch; margin: 24px 0 0; }
+
+  .cover__stats {
+    display: flex; flex-wrap: wrap; gap: 12px; margin-top: 44px;
+  }
+  .stat {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 12px; padding: 14px 18px; box-shadow: var(--shadow);
+    display: flex; flex-direction: column; gap: 3px; min-width: 120px;
+  }
+  .stat__num {
+    font-family: var(--font-mono); font-weight: 700; font-size: 1.5rem;
+    letter-spacing: -0.02em; color: var(--ink); font-variant-numeric: tabular-nums;
+  }
+  .stat__label {
+    font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .cover__foot {
+    margin-top: 40px; font-family: var(--font-mono); font-size: 12.5px;
+    color: var(--muted); letter-spacing: 0.02em;
+  }
+  .cover__foot b { color: var(--accent-ink); font-weight: 600; }
+
+  /* ---------- Generic layout helpers ---------- */
+  .cols { display: grid; grid-template-columns: 1fr; gap: 34px; align-items: start; }
+  @media (min-width: 860px) { .cols.two { grid-template-columns: 1.05fr 0.95fr; gap: 48px; } }
+
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 16px 20px; border-radius: 0 10px 10px 0;
+    margin-top: 8px;
+  }
+  .callout p { margin: 0; color: var(--ink-2); }
+
+  /* ---------- Architecture diagram ---------- */
+  .arch { display: flex; flex-direction: column; gap: 14px; }
+  .node {
+    border: 1px solid var(--line); border-radius: 12px; background: var(--surface);
+    padding: 16px 18px; box-shadow: var(--shadow);
+  }
+  .node--central { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-soft), var(--shadow); }
+  .node__head {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    margin-bottom: 8px;
+  }
+  .node__title { font-family: var(--font-mono); font-weight: 700; font-size: 0.95rem; letter-spacing: -0.01em; }
+  .node__tag {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 999px;
+  }
+  .tag--central { color: var(--accent-ink); background: var(--accent-soft); }
+  .tag--tenant { color: var(--muted); background: var(--surface-2); border: 1px solid var(--line); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font-family: var(--font-mono); font-size: 11px; color: var(--ink-2);
+    background: var(--surface-2); border: 1px solid var(--line);
+    padding: 3px 9px; border-radius: 7px; white-space: nowrap;
+  }
+  .arch__link {
+    align-self: center; font-family: var(--font-mono); font-size: 11px;
+    color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .arch__link::before, .arch__link::after { content: ""; width: 18px; height: 1px; background: var(--line-strong); }
+  .tenants { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .tenant {
+    border: 1px dashed var(--line-strong); border-radius: 10px; background: var(--surface-2);
+    padding: 12px; text-align: center;
+  }
+  .tenant__name { font-family: var(--font-mono); font-size: 12px; color: var(--ink); font-weight: 600; }
+  .tenant__sub { font-family: var(--font-mono); font-size: 10px; color: var(--muted); margin-top: 3px; }
+
+  /* ---------- Phase cards ---------- */
+  .phases { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  @media (min-width: 720px) { .phases { grid-template-columns: 1fr 1fr; } }
+  .phase {
+    position: relative; background: var(--surface); border: 1px solid var(--line);
+    border-radius: 14px; padding: 22px; box-shadow: var(--shadow);
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .phase__top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .phase__num {
+    font-family: var(--font-mono); font-weight: 700; font-size: 0.8rem;
+    color: var(--accent-ink); letter-spacing: 0.05em;
+  }
+  .phase__title { font-size: 1.12rem; font-weight: 740; letter-spacing: -0.015em; margin: 2px 0 0; }
+  .phase p { font-size: 0.95rem; margin: 0; color: var(--ink-2); }
+  .phase__meta { display: flex; align-items: center; gap: 8px; margin-top: auto; padding-top: 8px; }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--font-mono); font-size: 10.5px; font-weight: 600;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    padding: 4px 9px; border-radius: 999px;
+  }
+  .pill--ok { color: var(--ok); background: var(--ok-soft); }
+  .pill--tests { color: var(--muted); background: var(--surface-2); border: 1px solid var(--line); }
+  .pill--dot::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  /* ---------- Console / defect cards ---------- */
+  .defect {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    overflow: hidden; box-shadow: var(--shadow); margin-bottom: 16px;
+  }
+  .defect__bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 18px; border-bottom: 1px solid var(--line);
+    background: var(--surface-2);
+    font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.03em; color: var(--muted);
+  }
+  .defect__dot { width: 9px; height: 9px; border-radius: 50%; background: var(--crit); flex: none; }
+  .defect__dot--fixed { background: var(--ok); }
+  .defect__body { padding: 18px 20px 20px; }
+  .defect__body h3 { margin-bottom: 8px; }
+  .defect__body p { margin: 0 0 12px; font-size: 0.96rem; }
+  .defect__fix {
+    display: flex; gap: 10px; align-items: flex-start;
+    border-top: 1px dashed var(--line); padding-top: 12px; margin-top: 4px;
+  }
+  .defect__fix .tag {
+    font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--ok); background: var(--ok-soft);
+    padding: 3px 8px; border-radius: 6px; flex: none; margin-top: 2px;
+  }
+  .defect__fix p { margin: 0; font-size: 0.92rem; color: var(--ink-2); }
+
+  /* ---------- Guarantee grid ---------- */
+  .grid-list { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  @media (min-width: 680px) { .grid-list { grid-template-columns: 1fr 1fr; } }
+  .guarantee {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 15px 17px;
+  }
+  .guarantee__mark {
+    flex: none; width: 22px; height: 22px; border-radius: 6px;
+    background: var(--ok-soft); color: var(--ok);
+    display: grid; place-items: center; font-size: 13px; font-weight: 800; margin-top: 1px;
+  }
+  .guarantee h3 { font-size: 0.98rem; margin-bottom: 2px; }
+  .guarantee p { font-size: 0.88rem; margin: 0; color: var(--muted); }
+
+  /* ---------- Metric strip ---------- */
+  .strip {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px;
+    background: var(--line); border: 1px solid var(--line);
+    border-radius: 14px; overflow: hidden; margin-top: 8px;
+  }
+  @media (min-width: 720px) { .strip { grid-template-columns: repeat(4, 1fr); } }
+  .strip__cell { background: var(--surface); padding: 22px 20px; }
+  .strip__num {
+    font-family: var(--font-mono); font-weight: 700; font-size: 1.9rem;
+    letter-spacing: -0.02em; color: var(--ink); font-variant-numeric: tabular-nums;
+  }
+  .strip__num .accent { color: var(--accent-ink); }
+  .strip__label { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
+
+  /* ---------- Honest-state list ---------- */
+  .gaps { display: flex; flex-direction: column; gap: 2px; margin-top: 8px; }
+  .gap {
+    display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: start;
+    padding: 18px 4px; border-bottom: 1px solid var(--line);
+  }
+  .gap:last-child { border-bottom: none; }
+  .gap__tag {
+    font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em;
+    text-transform: uppercase; padding: 4px 9px; border-radius: 6px; white-space: nowrap; margin-top: 2px;
+  }
+  .gap__tag--stripe { color: var(--warn); background: var(--warn-soft); }
+  .gap__tag--infra { color: var(--muted); background: var(--surface-2); border: 1px solid var(--line); }
+  .gap h3 { font-size: 1rem; margin-bottom: 4px; }
+  .gap p { margin: 0; font-size: 0.94rem; }
+
+  /* ---------- Close ---------- */
+  .close { text-align: left; }
+  .close .big {
+    font-size: clamp(2rem, 5vw, 3.4rem); font-weight: 800; letter-spacing: -0.03em;
+    line-height: 1.04; margin: 0 0 22px; text-wrap: balance;
+  }
+  footer {
+    border-top: 1px solid var(--line); padding: 34px 0 70px;
+    font-family: var(--font-mono); font-size: 12px; color: var(--muted);
+    display: flex; flex-wrap: wrap; gap: 8px 22px; justify-content: space-between;
+  }
+
+  /* ---------- Reveal animation ---------- */
+  html.js .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.6s ease, transform 0.6s ease; }
+  html.js .reveal.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    html.js .reveal { opacity: 1 !important; transform: none !important; transition: none; }
+    .progress__fill { transition: none; }
+  }
+
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<div class="progress"><div class="progress__fill" id="progress"></div></div>
+
+<nav class="rail" aria-label="Sections">
+  <a href="#cover"><span class="rail__label">Overview</span></a>
+  <a href="#platform"><span class="rail__label">Platform</span></a>
+  <a href="#brief"><span class="rail__label">The brief</span></a>
+  <a href="#build"><span class="rail__label">Six phases</span></a>
+  <a href="#defects"><span class="rail__label">What tests caught</span></a>
+  <a href="#security"><span class="rail__label">Impersonation</span></a>
+  <a href="#proof"><span class="rail__label">Verification</span></a>
+  <a href="#honest"><span class="rail__label">Honest state</span></a>
+  <a href="#close"><span class="rail__label">Status</span></a>
+</nav>
+
+<main>
+  <!-- COVER -->
+  <section class="cover" id="cover">
+    <div class="cover__grid" aria-hidden="true"></div>
+    <p class="kicker">Platform Engineering · July 2026</p>
+    <h1>Super Admin Organization Management</h1>
+    <p class="sub">A control plane for a multi-tenant SaaS platform — designed, built, and verified across six phases, each runnable and tested before the next began.</p>
+
+    <div class="cover__stats">
+      <div class="stat"><span class="stat__num">6</span><span class="stat__label">Phases shipped</span></div>
+      <div class="stat"><span class="stat__num">44</span><span class="stat__label">Backend tests</span></div>
+      <div class="stat"><span class="stat__num">24</span><span class="stat__label">Frontend tests</span></div>
+      <div class="stat"><span class="stat__num">109</span><span class="stat__label">API operations</span></div>
+      <div class="stat"><span class="stat__num">0</span><span class="stat__label">PHPStan errors</span></div>
+    </div>
+
+    <p class="cover__foot"><b>Laravel 13</b> · <b>React 19</b> · database-per-tenant · verified live in the browser</p>
+  </section>
+
+  <!-- PLATFORM -->
+  <section id="platform">
+    <p class="eyebrow reveal">The platform</p>
+    <div class="cols two">
+      <div class="reveal">
+        <h2>Every organization gets its own database.</h2>
+        <p>A <strong>central</strong> database holds the tenant registry, users, plans, subscriptions, and platform audit trail. Everything else — customers, projects, tasks, files, roles — lives in a <strong>per-tenant</strong> database, provisioned automatically when an organization signs up.</p>
+        <p>That isolation is the platform's core promise. It is also its defining hazard.</p>
+        <div class="callout">
+          <p><strong>The trap:</strong> a query hitting the wrong connection doesn't error — it silently reads another tenant's data, or dies far from its cause. Every model pins its connection on purpose.</p>
+        </div>
+      </div>
+      <div class="arch reveal" aria-label="Architecture: central database provisions per-tenant databases">
+        <div class="node node--central">
+          <div class="node__head">
+            <span class="node__title">Central database</span>
+            <span class="node__tag tag--central">Control plane</span>
+          </div>
+          <div class="chips">
+            <span class="chip">tenants</span><span class="chip">users</span><span class="chip">plans</span>
+            <span class="chip">subscriptions</span><span class="chip">admin_activity</span><span class="chip">org_stats</span>
+          </div>
+        </div>
+        <div class="arch__link">provisions</div>
+        <div class="tenants">
+          <div class="tenant"><div class="tenant__name">tenant_1</div><div class="tenant__sub">isolated db</div></div>
+          <div class="tenant"><div class="tenant__name">tenant_2</div><div class="tenant__sub">isolated db</div></div>
+          <div class="tenant"><div class="tenant__name">tenant_N</div><div class="tenant__sub">isolated db</div></div>
+        </div>
+        <div class="node" style="margin-top:2px;">
+          <div class="node__head">
+            <span class="node__title">Per-tenant tables</span>
+            <span class="node__tag tag--tenant">×&nbsp;each org</span>
+          </div>
+          <div class="chips">
+            <span class="chip">customers</span><span class="chip">projects</span><span class="chip">tasks</span>
+            <span class="chip">files</span><span class="chip">roles</span><span class="chip">activity_log</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BRIEF -->
+  <section id="brief">
+    <p class="eyebrow reveal">The brief</p>
+    <div class="cols two">
+      <div class="reveal">
+        <h2>The Super Admin could log in — but saw nothing.</h2>
+        <p>A platform admin existed as a flag and a gate bypass, yet there was <strong>no organization list, no management screen, no way to act across tenants.</strong> The brief: build the full control plane — list, search, filter, dashboard stats, lifecycle actions, subscription detail, impersonation, and an audit trail.</p>
+      </div>
+      <div class="reveal">
+        <div class="callout" style="border-left-color: var(--warn); background: var(--warn-soft);">
+          <p><strong>The architecture challenge.</strong> Half the requirements are <em>“across all organizations”</em> — total users, projects, storage. But that data lives in thousands of separate databases. A naïve list would fan out one query per organization per page load: fine for three orgs, fatal for three thousand.</p>
+        </div>
+        <p style="margin-top:18px;">The requirement also assumed a server-rendered admin panel. The platform is an API consumed by a React SPA — so the panel became a <strong>React admin area</strong> over central-context endpoints, one stack, not two.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- BUILD -->
+  <section id="build">
+    <p class="eyebrow reveal">The build</p>
+    <h2 class="reveal">Six phases. Backend first, so the UI met complete data.</h2>
+    <p class="reveal muted" style="max-width:60ch;margin-bottom:32px;">Each phase shipped runnable and tested before the next began. The order was deliberate: make it correct and scalable, make it safe, then make it visible.</p>
+    <div class="phases">
+      <div class="phase reveal">
+        <div class="phase__top"><span class="phase__num">01</span></div>
+        <h3 class="phase__title">Admin API</h3>
+        <p>Central-context endpoints: list with search, filter, sort &amp; pagination; view, edit, suspend, activate; platform dashboard stats. Guarded so non-admins get a 404 — the surface isn't advertised.</p>
+        <div class="phase__meta"><span class="pill pill--ok pill--dot">Shipped</span><span class="pill pill--tests">11 tests</span></div>
+      </div>
+      <div class="phase reveal">
+        <div class="phase__top"><span class="phase__num">02</span></div>
+        <h3 class="phase__title">Stats rollup</h3>
+        <p>A denormalized central table, refreshed hourly by one queued job per tenant. Per-org counts now read from a single central query — no fan-out. Un-measured metrics report <span class="accent">null</span>, never a fake zero.</p>
+        <div class="phase__meta"><span class="pill pill--ok pill--dot">Shipped</span><span class="pill pill--tests">6 tests</span></div>
+      </div>
+      <div class="phase reveal">
+        <div class="phase__top"><span class="phase__num">03</span></div>
+        <h3 class="phase__title">Lifecycle safety</h3>
+        <p>Closed a data-loss trap where a soft delete dropped the tenant's database. Added a retention-gated purge command, restore, and a central admin audit trail that survives the org it records.</p>
+        <div class="phase__meta"><span class="pill pill--ok pill--dot">Shipped</span><span class="pill pill--tests">8 tests</span></div>
+      </div>
+      <div class="phase reveal">
+        <div class="phase__top"><span class="phase__num">04</span></div>
+        <h3 class="phase__title">Impersonation</h3>
+        <p>“Log in as” an org member via a token minted on that user — confined to one organization, expiring within the hour, revocable on stop, never for a super admin. Every start and stop audited.</p>
+        <div class="phase__meta"><span class="pill pill--ok pill--dot">Shipped</span><span class="pill pill--tests">11 tests</span></div>
+      </div>
+      <div class="phase reveal">
+        <div class="phase__top"><span class="phase__num">05</span></div>
+        <h3 class="phase__title">React admin UI</h3>
+        <p>A dedicated <span class="accent">/admin</span> area in the SPA: dashboard, organizations table, detail view with lifecycle actions, audit log, and a server-authoritative “you are impersonating” banner.</p>
+        <div class="phase__meta"><span class="pill pill--ok pill--dot">Shipped</span><span class="pill pill--tests">24 frontend tests</span></div>
+      </div>
+      <div class="phase reveal">
+        <div class="phase__top"><span class="phase__num">06</span></div>
+        <h3 class="phase__title">Overrides &amp; billing detail</h3>
+        <p>Per-organization limit overrides — raise, lower, set unlimited, or clear a customer's ceilings without a bespoke plan. Honoured everywhere quota is enforced. Billing cycle derived from the Stripe price.</p>
+        <div class="phase__meta"><span class="pill pill--ok pill--dot">Shipped</span><span class="pill pill--tests">8 tests</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEFECTS -->
+  <section id="defects">
+    <p class="eyebrow reveal">What the tests caught</p>
+    <h2 class="reveal">Two latent bugs that would have destroyed data.</h2>
+    <p class="reveal muted" style="max-width:62ch;margin-bottom:30px;">Neither was introduced by this work — both were dormant in the platform, and this module was the first code to exercise the paths that exposed them. Each was reproduced on a throwaway organization before any fix was trusted.</p>
+
+    <div class="defect reveal">
+      <div class="defect__bar"><span class="defect__dot"></span> critical · data loss · lifecycle</div>
+      <div class="defect__body">
+        <h3>A “soft delete” was dropping the tenant's database — irreversibly.</h3>
+        <p>The tenancy library maps a model's <span style="font-family:var(--font-mono);font-size:0.9em">deleted</span> event to a job that drops the database. That event fires on a <em>soft</em> delete too — so a reversible-looking action was destroying an entire organization's data.</p>
+        <div class="defect__fix">
+          <span class="tag">Fix</span>
+          <p>Database destruction is decoupled from the model lifecycle entirely. A soft delete keeps the database; only the deliberate, retention-gated <span style="font-family:var(--font-mono);font-size:0.9em">purge</span> command drops it. Verified live: soft delete → data survives; purge → dropped.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="defect reveal">
+      <div class="defect__bar"><span class="defect__dot"></span> critical · silent · never worked</div>
+      <div class="defect__body">
+        <h3>Restoring a deleted organization had never worked.</h3>
+        <p>The tenant model funnels any undeclared attribute into a JSON blob on save. <span style="font-family:var(--font-mono);font-size:0.9em">deleted_at</span> was undeclared — so restore cleared it in memory but never wrote it back. A “restored” organization stayed invisible forever. Soft delete had only appeared to work because it writes via a direct query that bypasses the model.</p>
+        <div class="defect__fix">
+          <span class="tag">Fix</span>
+          <p>Declared <span style="font-family:var(--font-mono);font-size:0.9em">deleted_at</span> a real column. Surfaced the moment a test actually restored an organization — exactly the kind of dormant bug a UI would have shipped over.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECURITY -->
+  <section id="security">
+    <p class="eyebrow reveal">Security by design</p>
+    <h2 class="reveal">“Log in as” — without becoming a liability.</h2>
+    <p class="reveal muted" style="max-width:62ch;margin-bottom:28px;">Impersonation acts as the target user, so every permission check evaluates naturally — no special-casing. But the token is tagged and confined, and every guarantee below is proven by a test and was verified live against the running app.</p>
+    <div class="grid-list reveal">
+      <div class="guarantee"><span class="guarantee__mark">✓</span><div><h3>Confined to one organization</h3><p>Blocked from the target's other orgs — 403, checked before membership.</p></div></div>
+      <div class="guarantee"><span class="guarantee__mark">✓</span><div><h3>Cannot reach the admin surface</h3><p>The impersonated user isn't a super admin — admin routes 404.</p></div></div>
+      <div class="guarantee"><span class="guarantee__mark">✓</span><div><h3>Expires on its own</h3><p>A short-lived token, ≤ 60 minutes, enforced by the auth layer.</p></div></div>
+      <div class="guarantee"><span class="guarantee__mark">✓</span><div><h3>Revocable before expiry</h3><p>“Stop” kills the token immediately — 401 on the next request.</p></div></div>
+      <div class="guarantee"><span class="guarantee__mark">✓</span><div><h3>Never a super admin</h3><p>You cannot impersonate another platform admin, yourself, or a non-member.</p></div></div>
+      <div class="guarantee"><span class="guarantee__mark">✓</span><div><h3>Fully audited</h3><p>Start and stop are both written to the central trail, with the real actor.</p></div></div>
+    </div>
+  </section>
+
+  <!-- PROOF -->
+  <section id="proof">
+    <p class="eyebrow reveal">Verification</p>
+    <h2 class="reveal">Real MySQL. Real browser. No shortcuts.</h2>
+    <div class="cols two">
+      <div class="reveal">
+        <p>Every backend test provisions a <strong>real MySQL tenant database</strong> — SQLite cannot prove database-per-tenant isolation, which is the platform's central claim, so the suite pays the cost on purpose.</p>
+        <p>Every phase was then driven <strong>live in a browser</strong> against the running application: the dashboard's real rolled-up figures, the organizations table, an override taking a limit from <span style="font-family:var(--font-mono);font-size:0.9em">49 / 25</span> to <span style="font-family:var(--font-mono);font-size:0.9em">49 / 100</span>, and impersonation start-to-stop.</p>
+      </div>
+      <div class="reveal">
+        <div class="strip">
+          <div class="strip__cell"><div class="strip__num">44</div><div class="strip__label">Backend tests</div></div>
+          <div class="strip__cell"><div class="strip__num">250</div><div class="strip__label">Assertions</div></div>
+          <div class="strip__cell"><div class="strip__num">24</div><div class="strip__label">Frontend tests</div></div>
+          <div class="strip__cell"><div class="strip__num"><span class="accent">0</span></div><div class="strip__label">Static-analysis errors</div></div>
+        </div>
+        <p class="muted" style="font-size:0.9rem;margin-top:14px;">Backed by Laravel Pint (style), PHPStan level 6 (static analysis), and a regenerated OpenAPI spec verified in both directions against the router — no undocumented route, no documented path that 404s.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HONEST -->
+  <section id="honest">
+    <p class="eyebrow reveal">What's not done — and why</p>
+    <h2 class="reveal">The gaps, stated plainly.</h2>
+    <p class="reveal muted" style="max-width:60ch;margin-bottom:20px;">A fabricated metric is worse than an absent one. These are the honest edges of what was built.</p>
+    <div class="gaps reveal">
+      <div class="gap">
+        <span class="gap__tag gap__tag--stripe">Needs Stripe</span>
+        <div><h3>MRR, churn &amp; dunning</h3><p>Deliberately not built — they require live Stripe data this environment has never had. The scaffolding (subscription status, interval, plan) is in place for whoever wires real keys.</p></div>
+      </div>
+      <div class="gap">
+        <span class="gap__tag gap__tag--stripe">Needs Stripe</span>
+        <div><h3>Billing paths unverified against live Stripe</h3><p>Subscribe, swap, and invoice flows are written to Cashier's contract but have never touched the live API. Everything Stripe isn't responsible for is tested.</p></div>
+      </div>
+      <div class="gap">
+        <span class="gap__tag gap__tag--infra">Environment</span>
+        <div><h3>Test coverage never measured</h3><p>No coverage driver exists in the local PHP build. CI is the first place a real percentage will appear — so no coverage number is claimed here.</p></div>
+      </div>
+      <div class="gap">
+        <span class="gap__tag gap__tag--infra">Scope</span>
+        <div><h3>Social login not built</h3><p>Specified in the original brief, not yet implemented. Password, email verification, two-factor, and session management are.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CLOSE -->
+  <section id="close" class="close">
+    <p class="eyebrow reveal">Status</p>
+    <p class="big reveal">The module is complete —<br>every phase verified against the running app.</p>
+    <p class="reveal" style="max-width:60ch;">List, search, filter, sort, dashboard stats, view, edit, suspend, activate, soft-delete, restore, impersonation, subscription detail, per-org overrides, and a full audit trail — on a safe-delete, scale-ready foundation. It delivers everything from the original brief achievable without live Stripe keys.</p>
+    <div class="cover__stats reveal" style="margin-top:34px;">
+      <div class="stat"><span class="stat__num" style="color:var(--ok)">6/6</span><span class="stat__label">Phases shipped</span></div>
+      <div class="stat"><span class="stat__num">68</span><span class="stat__label">Tests, backend + front</span></div>
+      <div class="stat"><span class="stat__num">2</span><span class="stat__label">Latent bugs killed</span></div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Super Admin Organization Management · Platform Presentation</span>
+    <span>Laravel 13 · React 19 · database-per-tenant · July 2026</span>
+  </footer>
+</main>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    root.classList.add("js");
+
+    var fill = document.getElementById("progress");
+    var sections = Array.prototype.slice.call(document.querySelectorAll("section[id]"));
+    var links = Array.prototype.slice.call(document.querySelectorAll(".rail a"));
+
+    function onScroll() {
+      var h = document.documentElement;
+      var max = h.scrollHeight - h.clientHeight;
+      var pct = max > 0 ? (h.scrollTop || document.body.scrollTop) / max * 100 : 0;
+      fill.style.width = pct + "%";
+    }
+    document.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+
+    // Reveal on enter
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) {
+      document.querySelectorAll(".reveal").forEach(function (el) { el.classList.add("in"); });
+    } else if ("IntersectionObserver" in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+      }, { threshold: 0.12, rootMargin: "0px 0px -8% 0px" });
+      document.querySelectorAll(".reveal").forEach(function (el) { io.observe(el); });
+    } else {
+      document.querySelectorAll(".reveal").forEach(function (el) { el.classList.add("in"); });
+    }
+
+    // Active rail link
+    if ("IntersectionObserver" in window && links.length) {
+      var map = {};
+      links.forEach(function (a) { map[a.getAttribute("href").slice(1)] = a; });
+      var spy = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) {
+            links.forEach(function (a) { a.classList.remove("active"); });
+            if (map[e.target.id]) map[e.target.id].classList.add("active");
+          }
+        });
+      }, { threshold: 0.5 });
+      sections.forEach(function (s) { spy.observe(s); });
+    }
+  })();
+</script>
+</body>
+</html>

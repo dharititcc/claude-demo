@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
+use App\Models\Permission;
+use App\Models\Role;
 use Spatie\Permission\DefaultTeamResolver;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
 
 return [
 
@@ -114,11 +116,20 @@ return [
     ],
 
     /*
-     * When set to true, the method for checking permissions will be registered on the gate.
-     * Set this to false if you want to implement custom logic for checking permissions.
+     * Disabled deliberately — AppServiceProvider registers a tenancy-aware
+     * replacement instead.
+     *
+     * Spatie's own hook is an unconditional Gate::before that resolves EVERY
+     * ability against the permissions table. That table lives in each tenant
+     * database, so in central context (e.g. the /horizon and /telescope
+     * dashboards, or any future policy on a central route) the lookup hits
+     * `saas_central.permissions`, which does not exist, and the request dies with
+     * a QueryException instead of a clean "denied".
+     *
+     * Our replacement checks permissions only when a tenant is active.
      */
 
-    'register_permission_check_method' => true,
+    'register_permission_check_method' => false,
 
     /*
      * When set to true, Laravel\Octane\Events\OperationTerminated event listener will be registered

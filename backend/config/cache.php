@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Support\Str;
 
 return [
@@ -113,5 +115,34 @@ return [
     */
 
     'prefix' => env('CACHE_PREFIX', Str::slug((string) env('APP_NAME', 'laravel')).'-cache-'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Serializable Classes
+    |--------------------------------------------------------------------------
+    |
+    | Introduced in Laravel 13. An allow-list of classes that may be
+    | unserialized out of the cache. Anything not listed is refused, which
+    | closes off PHP deserialization gadget chains should APP_KEY ever leak —
+    | worth having here, where APP_KEY also decrypts every two-factor secret.
+    |
+    | Empty because that is what an audit of every cache write actually found,
+    | not because nobody looked:
+    |
+    |   DashboardController  'dashboard:stats'  nested array of int/float/string
+    |                                           (countsByStatus() and
+    |                                           growthSeries() both return plain
+    |                                           arrays; the one Eloquent
+    |                                           collection on that page is
+    |                                           fetched fresh, never cached)
+    |   AuthService          2fa challenge      int (a user id)
+    |   AuthService          2fa attempts       int
+    |
+    | Nothing this application caches is an object. If you cache one later, add
+    | its class here — a missing entry fails closed, at read time.
+    |
+    */
+
+    'serializable_classes' => [],
 
 ];

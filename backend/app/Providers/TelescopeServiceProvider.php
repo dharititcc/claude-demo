@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Providers;
 
 use App\Models\User;
@@ -56,10 +58,10 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
      */
     protected function gate(): void
     {
-        Gate::define('viewTelescope', function (User $user) {
-            return in_array($user->email, [
-                //
-            ]);
-        });
+        // Platform staff only: Telescope records requests, queries, and mail
+        // across every organization, so it is one of the most sensitive surfaces
+        // in the app. Gated on the platform-admin flag rather than an email list
+        // that would drift out of date.
+        Gate::define('viewTelescope', fn (User $user) => (bool) $user->is_super_admin);
     }
 }

@@ -1,0 +1,17 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app
+        - database
+        - routes
+        - config
+
+    # Level 6 is a pragmatic bar for a Laravel app: it enforces type coverage
+    # without demanding annotations on every fluent Eloquent chain.
+    #
+    # No ignoreErrors / baseline: model property and relation types are declared
+    # explicitly on the models instead, which serves the IDE as well as the
+    # analyser.
+    level: 6
