@@ -86,7 +86,7 @@ jobs:
             }
           '
 
-      - name: Migration check
+      - name: Central migration check
         env:
           DB_CONNECTION: mysql
           DB_HOST: 127.0.0.1
@@ -94,6 +94,38 @@ jobs:
           DB_USERNAME: root
           DB_PASSWORD: secret
         run: php artisan migrate --force
+
+      # Fast-fail tenant-migration check. Central `migrate` above only touches the
+      # central database; the tenant schema lives in database/migrations/tenant/ and
+      # only runs when a tenant is provisioned. Creating an organization does exactly
+      # that synchronously — TenancyServiceProvider wires TenantCreated →
+      # CreateDatabase → MigrateDatabase → SeedDatabase — so this proves the tenant
+      # migrations apply cleanly on a fresh tenant DB. The full Pest suite provisions
+      # a tenant per test and would catch a broken tenant migration too, but only
+      # after the ~90-minute run below; this fails in seconds instead. `tenants:migrate`
+      # then confirms the tenant migrations are idempotent against the live tenant DB.
+      - name: Tenant migration check
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_DATABASE: saas_central_test
+          DB_USERNAME: root
+          DB_PASSWORD: secret
+          REDIS_HOST: 127.0.0.1
+          # Provisioning enters tenant context, which tags the permission cache per
+          # tenant — that requires a taggable store (Redis).
+          CACHE_STORE: redis
+        run: |
+          php artisan tinker --execute="
+            \$user = \App\Models\User::firstOrNew(['email' => 'ci-smoke@example.test']);
+            \$user->fill(['name' => 'CI Smoke', 'status' => 'active']);
+            \$user->password = \Illuminate\Support\Facades\Hash::make('irrelevant-ci-password');
+            \$user->email_verified_at = now();
+            \$user->save();
+            \$tenant = app(\App\Services\OrganizationService::class)->create(\$user, ['name' => 'CI Smoke Org']);
+            echo 'provisioned tenant '.\$tenant->id.PHP_EOL;
+          "
+          php artisan tenants:migrate --force
 
       # One run, with coverage — not two.
       #
