@@ -32,7 +32,7 @@ domain events. Complements `laravel` (framework mechanics) and defers detail to
 HTTP Request (JSON only — no Blade)
   → Route (routes/api.php, /api/v1 · routes/tenant.php)  ── binding, tenancy, throttle
   → Controller (app/Http/Controllers/Api/V1)  ── HTTP shape, $this->authorize(), delegate ONLY
-  → FormRequest (app/Http/Requests/{Domain}/)  ── validation (or inline validate() for small actions)
+  → FormRequest (app/Http/Requests/{Domain}/)  ── validation (one per action; no inline validate())
   → Policy                                      ── per-action authorization
   → Service (app/Services/{,Admin/})            ── business logic, DB::transaction, domain events
       → CustomerRepository (app/Repositories)   ── the ONE read-query builder
@@ -52,9 +52,9 @@ Service must not build HTTP responses; a Resource must not run business logic.
   — it registers controller middleware removed in Laravel 11+ and is fatal here
   (`CustomerController.php:27-31`).
 - **FormRequests** (`app/Http/Requests/{Domain}/`) own validation and
-  request-level authorization; small actions may use inline `$request->validate()`
-  (`CustomerController.php:236,267`). Keep controllers free of rule arrays where a
-  FormRequest exists.
+  request-level authorization. **Every** action type-hints one — index/filter
+  actions included (`IndexCustomerRequest`). No controller contains a rule array;
+  there is no inline `$request->validate()` anywhere.
 - **Policies** — authorization logic, invoked via `$this->authorize()`; backed by
   Spatie tenant permissions (`App\Enums\Permission`). Never inline `if` checks.
 - **Services** (`app/Services/{,Admin/}`) — the home of business logic and writes.

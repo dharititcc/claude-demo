@@ -43,7 +43,7 @@ in `spatie`.
 - **Super Admin** is `users.is_super_admin` (central boolean) via `Gate::before`
   — a full bypass. Guard super-admin routes with the `super-admin` middleware,
   which returns **404** (not 403) to non-admins so the surface isn't advertised.
-- **Validate via Form Requests** (or inline `validate()`), with strict rules.
+- **Validate via Form Requests** (one per action; no inline `validate()`), with strict rules.
   Cross-tenant `exists:` (e.g. `owner_id`, `plans`) **must be qualified with the
   central connection** or it runs against the tenant DB and 500s/misvalidates.
 - **Mass-assignment control:** define `$fillable`; never feed `$request->all()`

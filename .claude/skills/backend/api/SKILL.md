@@ -40,9 +40,10 @@ separate React SPA; there is no Blade output.
   is **no `ResponseHelper` and no `app/Helpers`**. Writes return
   `{message, data}` (`CustomerController.php:113,152,176`); reads return
   `{data: ...}` or a paginated `JsonResource` collection.
-- **FormRequest validation** on writes (or inline `$request->validate()` for small
-  actions like note/import, `CustomerController.php:236,267`); returns 422 with
-  field errors.
+- **FormRequest validation** on every action — reads and writes. Every endpoint
+  type-hints an `app/Http/Requests/{Domain}/*Request`; there is **no** inline
+  `$request->validate()` in any controller (index/filter actions use an
+  `Index*Request`). Returns 422 with field errors.
 - **Error taxonomy:** 422 validation · 402 plan/quota breach (caller permitted,
   plan is not — `EnforcePlanLimit.php:52`) · 400 missing `X-Organization`
   (`InitializeTenancyForUser.php:33`) · 403 non-member or policy denial · 401 bad
@@ -104,7 +105,7 @@ separate React SPA; there is no Blade output.
 ## Recommended Workflow
 
 1. Define the resource, `/api/v1` route, verb, and status codes.
-2. Add the FormRequest (or inline `validate()`); confirm the Policy/permission.
+2. Add the action's FormRequest (`app/Http/Requests/{Domain}/`); confirm the Policy/permission.
 3. Implement the Service; keep the controller thin.
 4. Build the `JsonResource` with eager-loaded relations.
 5. Return the inline `{message,data}` envelope with the right status; paginate

@@ -25,7 +25,7 @@ Blade UI (the client is a separate React SPA). Infrastructure is in `devops`,
 
 - Keep controllers thin: HTTP concerns, `$this->authorize()`, delegation, and
   returning an API Resource.
-- Put validation in Form Requests (or inline `validate()` for small actions),
+- Put validation in Form Requests (one per action — no inline `$request->validate()`),
   business logic in Services, and the one read-heavy query builder in
   `CustomerRepository`.
 - Pin every model to its database connection (central vs tenant).
@@ -102,7 +102,7 @@ Blade UI (the client is a separate React SPA). Infrastructure is in `devops`,
 ## Recommended Workflow
 
 1. Read the root `backend` skill, then the sibling controller/service/resource.
-2. Add/update the Form Request (or inline `validate()`); confirm the Policy.
+2. Add/update the action's Form Request; confirm the Policy.
 3. Implement logic in the Service (transaction + events); pin new models.
 4. Wire the controller: `authorize()`, delegate, return a Resource envelope.
 5. Annotate the endpoint with `#[OA\...]` (see the root skill's OpenAPI rules).
