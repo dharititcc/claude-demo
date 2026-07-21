@@ -11,6 +11,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Services\OrganizationService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 use Throwable;
 
@@ -123,7 +124,7 @@ class SeedDemoData extends Command
         // destruction from the model lifecycle (a soft delete must never drop a
         // database), forceDelete no longer does this — so --fresh would orphan
         // the old databases without it. This mirrors the tenants:purge command.
-        /** @var \Illuminate\Support\Collection<int, Tenant> $tenants */
+        /** @var Collection<int, Tenant> $tenants */
         $tenants = Tenant::withTrashed()
             ->whereIn('name', ['Acme Inc', 'Globex Corp'])
             ->get();
