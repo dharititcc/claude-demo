@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Customer\AddNoteRequest;
+use App\Http\Requests\Customer\ImportCustomersRequest;
 use App\Http\Requests\Customer\IndexCustomerRequest;
 use App\Http\Requests\Customer\StoreCustomerRequest;
 use App\Http\Requests\Customer\UpdateCustomerRequest;
@@ -14,7 +16,6 @@ use App\Models\Customer;
 use App\Repositories\CustomerRepository;
 use App\Services\CustomerService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use OpenApi\Attributes as OA;
@@ -229,13 +230,9 @@ class CustomerController extends Controller
         requestBody: new OA\RequestBody(required: true, content: new OA\MediaType(mediaType: 'multipart/form-data', schema: new OA\Schema(required: ['file'], properties: [new OA\Property(property: 'file', type: 'string', format: 'binary', description: 'CSV, max 10 MB')]))),
         responses: [new OA\Response(response: 200, description: 'Import summary: imported, skipped, and per-row errors'), new OA\Response(response: 403, description: 'Lacks customers.import'), new OA\Response(response: 422, description: 'Validation failed', content: new OA\JsonContent(ref: '#/components/schemas/ValidationError'))],
     )]
-    public function import(Request $request): JsonResponse
+    public function import(ImportCustomersRequest $request): JsonResponse
     {
         $this->authorize('import', Customer::class);
-
-        $request->validate([
-            'file' => ['required', 'file', 'mimes:csv,txt', 'max:10240'], // 10 MB
-        ]);
 
         $result = $this->service->importCsv(
             $request->file('file')->getRealPath(),
@@ -260,13 +257,11 @@ class CustomerController extends Controller
         requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['body'], properties: [new OA\Property(property: 'body', type: 'string', maxLength: 5000)])),
         responses: [new OA\Response(response: 201, description: 'Note added'), new OA\Response(response: 403, description: 'Lacks customers.update'), new OA\Response(response: 422, description: 'Validation failed', content: new OA\JsonContent(ref: '#/components/schemas/ValidationError'))],
     )]
-    public function addNote(Request $request, Customer $customer): JsonResponse
+    public function addNote(AddNoteRequest $request, Customer $customer): JsonResponse
     {
         $this->authorize('update', $customer);
 
-        $validated = $request->validate([
-            'body' => ['required', 'string', 'max:5000'],
-        ]);
+        $validated = $request->validated();
 
         $note = $this->service->addNote($customer, $request->user(), $validated['body']);
 

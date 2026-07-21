@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\File\CreateFolderRequest;
+use App\Http\Requests\File\CreateShareRequest;
+use App\Http\Requests\File\UploadFileRequest;
 use App\Models\File;
 use App\Models\Folder;
 use App\Services\FileManagerService;
@@ -82,14 +85,9 @@ class FileController extends Controller
         requestBody: new OA\RequestBody(required: true, content: new OA\MediaType(mediaType: 'multipart/form-data', schema: new OA\Schema(required: ['file'], properties: [new OA\Property(property: 'file', type: 'string', format: 'binary'), new OA\Property(property: 'folder_id', type: 'integer', nullable: true)]))),
         responses: [new OA\Response(response: 201, description: 'Uploaded'), new OA\Response(response: 402, description: 'Would exceed the plan storage quota'), new OA\Response(response: 403, description: 'Lacks files.upload'), new OA\Response(response: 422, description: 'Blocked file type or too large')],
     )]
-    public function upload(Request $request): JsonResponse
+    public function upload(UploadFileRequest $request): JsonResponse
     {
         $this->authorize('upload', File::class);
-
-        $request->validate([
-            'file' => ['required', 'file', 'max:51200'], // 50 MB
-            'folder_id' => ['nullable', 'integer', 'exists:folders,id'],
-        ]);
 
         $file = $this->files->upload(
             $request->file('file'),
@@ -145,14 +143,11 @@ class FileController extends Controller
         requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['name'], properties: [new OA\Property(property: 'name', type: 'string'), new OA\Property(property: 'parent_id', type: 'integer', nullable: true)])),
         responses: [new OA\Response(response: 201, description: 'Created'), new OA\Response(response: 403, description: 'Lacks files.upload'), new OA\Response(response: 422, description: 'Validation failed', content: new OA\JsonContent(ref: '#/components/schemas/ValidationError'))],
     )]
-    public function createFolder(Request $request): JsonResponse
+    public function createFolder(CreateFolderRequest $request): JsonResponse
     {
         $this->authorize('upload', File::class);
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'parent_id' => ['nullable', 'integer', 'exists:folders,id'],
-        ]);
+        $validated = $request->validated();
 
         $folder = $this->files->createFolder(
             $validated['name'],
@@ -196,15 +191,11 @@ class FileController extends Controller
         requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(properties: [new OA\Property(property: 'expires_in_days', type: 'integer', minimum: 1, maximum: 365, nullable: true, description: 'Omit for no expiry'), new OA\Property(property: 'password', type: 'string', nullable: true, description: 'Optional gate'), new OA\Property(property: 'max_downloads', type: 'integer', nullable: true, description: 'Omit for unlimited')])),
         responses: [new OA\Response(response: 201, description: 'Share link created'), new OA\Response(response: 403, description: 'Lacks files.share'), new OA\Response(response: 422, description: 'Validation failed', content: new OA\JsonContent(ref: '#/components/schemas/ValidationError'))],
     )]
-    public function share(Request $request, File $file): JsonResponse
+    public function share(CreateShareRequest $request, File $file): JsonResponse
     {
         $this->authorize('share', File::class);
 
-        $validated = $request->validate([
-            'expires_in_days' => ['nullable', 'integer', 'min:1', 'max:365'],
-            'password' => ['nullable', 'string', 'min:4', 'max:100'],
-            'max_downloads' => ['nullable', 'integer', 'min:1', 'max:100000'],
-        ]);
+        $validated = $request->validated();
 
         [$share, $token] = $this->files->share(
             $file,

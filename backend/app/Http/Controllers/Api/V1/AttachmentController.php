@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Attachment\StoreAttachmentRequest;
 use App\Http\Resources\AttachmentResource;
 use App\Models\Attachment;
 use App\Models\Customer;
@@ -36,14 +37,10 @@ class AttachmentController extends Controller
         requestBody: new OA\RequestBody(required: true, content: new OA\MediaType(mediaType: 'multipart/form-data', schema: new OA\Schema(required: ['file'], properties: [new OA\Property(property: 'file', type: 'string', format: 'binary', description: 'Max 10 MB')]))),
         responses: [new OA\Response(response: 201, description: 'Uploaded'), new OA\Response(response: 403, description: 'Lacks files.upload'), new OA\Response(response: 422, description: 'Blocked file type or too large')],
     )]
-    public function store(Request $request, Customer $customer): JsonResponse
+    public function store(StoreAttachmentRequest $request, Customer $customer): JsonResponse
     {
         $this->authorize('update', $customer);
         $this->authorize('upload', Attachment::class);
-
-        $request->validate([
-            'file' => ['required', 'file', 'max:10240'], // 10 MB
-        ]);
 
         $file = $request->file('file');
         $extension = strtolower((string) $file->getClientOriginalExtension());

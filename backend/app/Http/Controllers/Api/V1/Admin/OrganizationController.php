@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\IndexOrganizationRequest;
+use App\Http\Requests\Admin\SetLimitsOrganizationRequest;
+use App\Http\Requests\Admin\UpdateOrganizationRequest;
 use App\Http\Resources\Admin\AdminOrganizationResource;
 use App\Models\Tenant;
 use App\Services\Admin\AdminAudit;
@@ -12,7 +15,6 @@ use App\Services\Admin\OrganizationAdminService;
 use App\Services\UsageService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use OpenApi\Attributes as OA;
 
 /**
@@ -52,18 +54,9 @@ class OrganizationController extends Controller
             new OA\Response(response: 422, description: 'Validation failed', content: new OA\JsonContent(ref: '#/components/schemas/ValidationError')),
         ],
     )]
-    public function index(Request $request): JsonResponse
+    public function index(IndexOrganizationRequest $request): JsonResponse
     {
-        $filters = $request->validate([
-            'search' => ['nullable', 'string', 'max:255'],
-            'status' => ['nullable', Rule::in(['trial', 'active', 'suspended', 'cancelled'])],
-            'plan' => ['nullable', 'string', 'max:255'],
-            'from' => ['nullable', 'date'],
-            'to' => ['nullable', 'date'],
-            'trashed' => ['nullable', Rule::in(['with', 'only'])],
-            'sort' => ['nullable', 'string', 'max:50'],
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
-        ]);
+        $filters = $request->validated();
 
         $page = $this->service->paginate($filters);
 
@@ -131,14 +124,9 @@ class OrganizationController extends Controller
             new OA\Response(response: 422, description: 'Validation failed', content: new OA\JsonContent(ref: '#/components/schemas/ValidationError')),
         ],
     )]
-    public function limits(Request $request, Tenant $organization): JsonResponse
+    public function limits(SetLimitsOrganizationRequest $request, Tenant $organization): JsonResponse
     {
-        $validated = $request->validate([
-            'overrides' => ['present', 'array'],
-            'overrides.users' => ['nullable', 'integer', 'min:0', 'max:1000000'],
-            'overrides.customers' => ['nullable', 'integer', 'min:0', 'max:1000000'],
-            'overrides.storage_mb' => ['nullable', 'integer', 'min:0', 'max:10000000'],
-        ]);
+        $validated = $request->validated();
 
         // An empty overrides object clears everything — but Laravel's validated()
         // omits the key entirely when the array is empty, so default it.
@@ -175,15 +163,9 @@ class OrganizationController extends Controller
         ])),
         responses: [new OA\Response(response: 200, description: 'Updated'), new OA\Response(response: 404, description: 'Not a super admin, or unknown organization'), new OA\Response(response: 422, description: 'Validation failed', content: new OA\JsonContent(ref: '#/components/schemas/ValidationError'))],
     )]
-    public function update(Request $request, Tenant $organization): JsonResponse
+    public function update(UpdateOrganizationRequest $request, Tenant $organization): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => ['sometimes', 'string', 'max:255'],
-            'phone' => ['sometimes', 'nullable', 'string', 'max:50'],
-            'timezone' => ['sometimes', 'string', 'timezone'],
-            'currency' => ['sometimes', 'string', 'size:3'],
-            'language' => ['sometimes', 'string', 'max:5'],
-        ]);
+        $validated = $request->validated();
 
         $organization = $this->service->update($organization, $validated);
 

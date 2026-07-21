@@ -5,14 +5,15 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Project\IndexProjectRequest;
+use App\Http\Requests\Project\StoreProjectRequest;
+use App\Http\Requests\Project\UpdateProjectRequest;
 use App\Http\Resources\ProjectResource;
 use App\Models\Project;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Validation\Rule;
 use OpenApi\Attributes as OA;
 
 /**
@@ -35,19 +36,11 @@ class ProjectController extends Controller
         parameters: [new OA\Parameter(ref: '#/components/parameters/OrganizationHeader'), new OA\Parameter(name: 'q', in: 'query', schema: new OA\Schema(type: 'string')), new OA\Parameter(name: 'status', in: 'query', schema: new OA\Schema(type: 'string')), new OA\Parameter(name: 'customer_id', in: 'query', schema: new OA\Schema(type: 'integer')), new OA\Parameter(name: 'overdue', in: 'query', schema: new OA\Schema(type: 'boolean')), new OA\Parameter(name: 'sort', in: 'query', schema: new OA\Schema(type: 'string')), new OA\Parameter(name: 'direction', in: 'query', schema: new OA\Schema(type: 'string')), new OA\Parameter(name: 'per_page', in: 'query', schema: new OA\Schema(type: 'integer'))],
         responses: [new OA\Response(response: 200, description: 'Paginated projects'), new OA\Response(response: 403, description: 'Lacks projects.view'), new OA\Response(response: 422, description: 'Validation failed', content: new OA\JsonContent(ref: '#/components/schemas/ValidationError'))],
     )]
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(IndexProjectRequest $request): AnonymousResourceCollection
     {
         $this->authorize('viewAny', Project::class);
 
-        $filters = $request->validate([
-            'q' => ['nullable', 'string', 'max:255'],
-            'status' => ['nullable', Rule::in(Project::STATUSES)],
-            'customer_id' => ['nullable', 'integer'],
-            'overdue' => ['nullable', 'boolean'],
-            'sort' => ['nullable', Rule::in(Project::SORTABLE)],
-            'direction' => ['nullable', Rule::in(['asc', 'desc'])],
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
-        ]);
+        $filters = $request->validated();
 
         $query = Project::query()
             // withCount rather than loading tasks: progress needs two numbers,
@@ -95,11 +88,11 @@ class ProjectController extends Controller
         requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['name'], properties: [new OA\Property(property: 'name', type: 'string'), new OA\Property(property: 'description', type: 'string', nullable: true), new OA\Property(property: 'status', type: 'string', enum: ['planning', 'active', 'on_hold', 'completed', 'cancelled']), new OA\Property(property: 'color', type: 'string', example: '#6366f1'), new OA\Property(property: 'customer_id', type: 'integer', nullable: true), new OA\Property(property: 'starts_on', type: 'string', format: 'date'), new OA\Property(property: 'due_on', type: 'string', format: 'date'), new OA\Property(property: 'budget', type: 'number', format: 'float')])),
         responses: [new OA\Response(response: 201, description: 'Created'), new OA\Response(response: 403, description: 'Lacks projects.create'), new OA\Response(response: 422, description: 'Validation failed', content: new OA\JsonContent(ref: '#/components/schemas/ValidationError'))],
     )]
-    public function store(Request $request): JsonResponse
+    public function store(StoreProjectRequest $request): JsonResponse
     {
         $this->authorize('create', Project::class);
 
-        $validated = $this->validateProject($request);
+        $validated = $request->validated();
 
         $project = Project::create([
             ...$validated,
@@ -142,11 +135,11 @@ class ProjectController extends Controller
         requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(properties: [new OA\Property(property: 'name', type: 'string'), new OA\Property(property: 'status', type: 'string', enum: ['planning', 'active', 'on_hold', 'completed', 'cancelled']), new OA\Property(property: 'due_on', type: 'string', format: 'date'), new OA\Property(property: 'budget', type: 'number', format: 'float')])),
         responses: [new OA\Response(response: 200, description: 'Updated'), new OA\Response(response: 403, description: 'Lacks projects.update'), new OA\Response(response: 422, description: 'Validation failed', content: new OA\JsonContent(ref: '#/components/schemas/ValidationError'))],
     )]
-    public function update(Request $request, Project $project): JsonResponse
+    public function update(UpdateProjectRequest $request, Project $project): JsonResponse
     {
         $this->authorize('update', $project);
 
-        $project->update($this->validateProject($request, updating: true));
+        $project->update($request->validated());
 
         return response()->json([
             'message' => 'Project updated.',
@@ -194,31 +187,6 @@ class ProjectController extends Controller
         return response()->json([
             'message' => 'Project restored.',
             'data' => new ProjectResource($project),
-        ]);
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function validateProject(Request $request, bool $updating = false): array
-    {
-        $required = $updating ? 'sometimes' : 'required';
-        $central = config('tenancy.database.central_connection');
-
-        return $request->validate([
-            'name' => [$required, 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:5000'],
-            'status' => ['sometimes', Rule::in(Project::STATUSES)],
-            'color' => ['sometimes', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
-            'customer_id' => ['nullable', 'integer', 'exists:customers,id'],
-
-            // Qualified with the central connection: users live there, and an
-            // unqualified rule would look for the table in the tenant database.
-            'owner_id' => ['nullable', 'integer', "exists:{$central}.users,id"],
-
-            'starts_on' => ['nullable', 'date'],
-            'due_on' => ['nullable', 'date', 'after_or_equal:starts_on'],
-            'budget' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
         ]);
     }
 }

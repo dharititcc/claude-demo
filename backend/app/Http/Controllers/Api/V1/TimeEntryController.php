@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\TimeEntry\LogTimeEntryRequest;
+use App\Http\Requests\TimeEntry\StartTimeEntryRequest;
 use App\Http\Resources\TimeEntryResource;
 use App\Models\Task;
 use App\Services\TaskService;
@@ -33,13 +35,11 @@ class TimeEntryController extends Controller
         requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(properties: [new OA\Property(property: 'description', type: 'string', maxLength: 500)])),
         responses: [new OA\Response(response: 201, description: 'Timer started'), new OA\Response(response: 403, description: 'Lacks tasks.update')],
     )]
-    public function start(Request $request, Task $task): JsonResponse
+    public function start(StartTimeEntryRequest $request, Task $task): JsonResponse
     {
         $this->authorize('trackTime', $task);
 
-        $validated = $request->validate([
-            'description' => ['nullable', 'string', 'max:500'],
-        ]);
+        $validated = $request->validated();
 
         $entry = $this->service->startTimer($task, $request->user(), $validated['description'] ?? null);
 
@@ -82,15 +82,11 @@ class TimeEntryController extends Controller
         requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['minutes'], properties: [new OA\Property(property: 'minutes', type: 'integer', minimum: 1, maximum: 1440), new OA\Property(property: 'description', type: 'string'), new OA\Property(property: 'billable', type: 'boolean')])),
         responses: [new OA\Response(response: 201, description: 'Time logged'), new OA\Response(response: 403, description: 'Lacks tasks.update'), new OA\Response(response: 422, description: 'Validation failed', content: new OA\JsonContent(ref: '#/components/schemas/ValidationError'))],
     )]
-    public function log(Request $request, Task $task): JsonResponse
+    public function log(LogTimeEntryRequest $request, Task $task): JsonResponse
     {
         $this->authorize('trackTime', $task);
 
-        $validated = $request->validate([
-            'minutes' => ['required', 'integer', 'min:1', 'max:1440'], // one day
-            'description' => ['nullable', 'string', 'max:500'],
-            'billable' => ['sometimes', 'boolean'],
-        ]);
+        $validated = $request->validated();
 
         $entry = $this->service->logTime(
             $task,

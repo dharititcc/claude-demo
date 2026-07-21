@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Billing\SubscribeRequest;
+use App\Http\Requests\Billing\SwapPlanRequest;
 use App\Http\Resources\PlanResource;
 use App\Models\Plan;
 use App\Services\BillingService;
 use App\Services\UsageService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Exists;
 use Laravel\Cashier\Exceptions\InvalidCustomer;
 use OpenApi\Attributes as OA;
 use Stripe\Exception\ApiErrorException;
@@ -110,16 +110,11 @@ class BillingController extends Controller
         requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['plan', 'interval'], properties: [new OA\Property(property: 'plan', type: 'string', description: 'Plan slug'), new OA\Property(property: 'interval', type: 'string', enum: ['monthly', 'annual']), new OA\Property(property: 'payment_method', type: 'string', nullable: true, description: 'Stripe payment-method id'), new OA\Property(property: 'coupon', type: 'string', nullable: true)])),
         responses: [new OA\Response(response: 201, description: 'Subscribed'), new OA\Response(response: 402, description: 'Payment failed or requires action'), new OA\Response(response: 403, description: 'Lacks billing.manage — owners only'), new OA\Response(response: 422, description: 'Validation failed', content: new OA\JsonContent(ref: '#/components/schemas/ValidationError'))],
     )]
-    public function subscribe(Request $request): JsonResponse
+    public function subscribe(SubscribeRequest $request): JsonResponse
     {
         $this->authorize('manageBilling', tenant());
 
-        $validated = $request->validate([
-            'plan' => ['required', 'string', $this->existingPlanRule()],
-            'interval' => ['required', Rule::in(Plan::INTERVALS)],
-            'payment_method' => ['nullable', 'string'],
-            'coupon' => ['nullable', 'string', 'max:100'],
-        ]);
+        $validated = $request->validated();
 
         $plan = Plan::where('slug', $validated['plan'])->firstOrFail();
 
@@ -147,14 +142,11 @@ class BillingController extends Controller
         requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['plan', 'interval'], properties: [new OA\Property(property: 'plan', type: 'string', description: 'Plan slug'), new OA\Property(property: 'interval', type: 'string', enum: ['monthly', 'annual'])])),
         responses: [new OA\Response(response: 200, description: 'Plan changed'), new OA\Response(response: 402, description: 'Payment failed'), new OA\Response(response: 403, description: 'Lacks billing.manage'), new OA\Response(response: 422, description: 'Validation failed', content: new OA\JsonContent(ref: '#/components/schemas/ValidationError'))],
     )]
-    public function swap(Request $request): JsonResponse
+    public function swap(SwapPlanRequest $request): JsonResponse
     {
         $this->authorize('manageBilling', tenant());
 
-        $validated = $request->validate([
-            'plan' => ['required', 'string', $this->existingPlanRule()],
-            'interval' => ['required', Rule::in(Plan::INTERVALS)],
-        ]);
+        $validated = $request->validated();
 
         $plan = Plan::where('slug', $validated['plan'])->firstOrFail();
 
@@ -275,21 +267,6 @@ class BillingController extends Controller
             'vendor' => config('app.name'),
             'product' => tenant()->name,
         ]);
-    }
-
-    /**
-     * "Plan exists and is active", qualified with the central connection.
-     *
-     * These routes run inside tenant context, so the default connection is the
-     * organization's own database — an unqualified exists rule would look for
-     * `plans` there and fail with a missing-table error on *every* call, valid
-     * input included.
-     */
-    private function existingPlanRule(): Exists
-    {
-        $central = config('tenancy.database.central_connection');
-
-        return Rule::exists("{$central}.plans", 'slug')->where('is_active', true);
     }
 
     /**

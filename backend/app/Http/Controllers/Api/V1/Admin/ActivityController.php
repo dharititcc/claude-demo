@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\IndexActivityRequest;
 use App\Http\Resources\Admin\AdminActivityResource;
 use App\Models\AdminActivity;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
 
 /**
@@ -37,13 +37,9 @@ class ActivityController extends Controller
             new OA\Response(response: 422, description: 'Validation failed', content: new OA\JsonContent(ref: '#/components/schemas/ValidationError')),
         ],
     )]
-    public function index(Request $request): JsonResponse
+    public function index(IndexActivityRequest $request): JsonResponse
     {
-        $filters = $request->validate([
-            'action' => ['nullable', 'string', 'max:100'],
-            'organization' => ['nullable', 'string', 'max:255'],
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
-        ]);
+        $filters = $request->validated();
 
         $query = AdminActivity::query()
             ->with('admin')

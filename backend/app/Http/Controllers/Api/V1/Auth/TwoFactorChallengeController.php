@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\TwoFactorChallengeRequest;
 use App\Http\Resources\OrganizationResource;
 use App\Http\Resources\UserResource;
 use App\Services\AuthService;
 use App\Services\TwoFactorService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use OpenApi\Attributes as OA;
 
@@ -56,14 +56,9 @@ class TwoFactorChallengeController extends Controller
             new OA\Response(response: 429, description: 'Too many attempts from this address'),
         ],
     )]
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(TwoFactorChallengeRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'challenge_token' => ['required', 'string'],
-            'code' => ['required_without:recovery_code', 'nullable', 'string'],
-            'recovery_code' => ['required_without:code', 'nullable', 'string'],
-            'device_name' => ['nullable', 'string', 'max:255'],
-        ]);
+        $validated = $request->validated();
 
         $challenge = $validated['challenge_token'];
         $user = $this->auth->resolveTwoFactorChallenge($challenge);

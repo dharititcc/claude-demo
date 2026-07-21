@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AuditLog\IndexAuditLogRequest;
 use App\Models\Activity;
 use App\Models\Tenant;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use OpenApi\Attributes as OA;
 
 /**
@@ -30,20 +29,13 @@ class AuditLogController extends Controller
         parameters: [new OA\Parameter(ref: '#/components/parameters/OrganizationHeader'), new OA\Parameter(name: 'log_name', in: 'query', description: 'Table name, e.g. customers', schema: new OA\Schema(type: 'string')), new OA\Parameter(name: 'event', in: 'query', description: 'created, updated, deleted, restored', schema: new OA\Schema(type: 'string')), new OA\Parameter(name: 'causer_id', in: 'query', schema: new OA\Schema(type: 'integer')), new OA\Parameter(name: 'from', in: 'query', schema: new OA\Schema(type: 'string')), new OA\Parameter(name: 'to', in: 'query', schema: new OA\Schema(type: 'string')), new OA\Parameter(name: 'per_page', in: 'query', schema: new OA\Schema(type: 'integer'))],
         responses: [new OA\Response(response: 200, description: 'Paginated audit entries, newest first'), new OA\Response(response: 403, description: 'Lacks audit.view'), new OA\Response(response: 422, description: 'Validation failed', content: new OA\JsonContent(ref: '#/components/schemas/ValidationError'))],
     )]
-    public function index(Request $request): JsonResponse
+    public function index(IndexAuditLogRequest $request): JsonResponse
     {
         // Pass the active tenant instance, not the class: the policy method takes
         // a Tenant, and passing the class name leaves that argument unfilled.
         $this->authorize('viewAudit', tenant());
 
-        $filters = $request->validate([
-            'log_name' => ['nullable', 'string', 'max:100'],
-            'event' => ['nullable', Rule::in(['created', 'updated', 'deleted', 'restored'])],
-            'causer_id' => ['nullable', 'integer'],
-            'from' => ['nullable', 'date'],
-            'to' => ['nullable', 'date'],
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
-        ]);
+        $filters = $request->validated();
 
         // Order by id, not created_at: the log is high-volume and many entries
         // share a second, so created_at alone gives an undefined order between

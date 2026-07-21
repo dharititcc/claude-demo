@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\ImpersonateRequest;
 use App\Models\Tenant;
 use App\Services\Admin\ImpersonationService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
 
 /**
@@ -44,11 +44,9 @@ class ImpersonationController extends Controller
             new OA\Response(response: 422, description: 'Target is a super admin, not a member, or is yourself', content: new OA\JsonContent(ref: '#/components/schemas/ValidationError')),
         ],
     )]
-    public function start(Request $request, Tenant $organization): JsonResponse
+    public function start(ImpersonateRequest $request, Tenant $organization): JsonResponse
     {
-        $validated = $request->validate([
-            'user_id' => ['nullable', 'integer'],
-        ]);
+        $validated = $request->validated();
 
         $session = $this->impersonation->start(
             $request->user(),

@@ -5,14 +5,17 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Task\BoardTaskRequest;
+use App\Http\Requests\Task\IndexTaskRequest;
+use App\Http\Requests\Task\MoveTaskRequest;
+use App\Http\Requests\Task\StoreTaskRequest;
+use App\Http\Requests\Task\UpdateTaskRequest;
 use App\Http\Resources\TaskResource;
 use App\Models\Task;
 use App\Services\TaskService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Validation\Rule;
 use OpenApi\Attributes as OA;
 
 class TaskController extends Controller
@@ -33,25 +36,11 @@ class TaskController extends Controller
         parameters: [new OA\Parameter(ref: '#/components/parameters/OrganizationHeader'), new OA\Parameter(name: 'project_id', in: 'query', schema: new OA\Schema(type: 'integer')), new OA\Parameter(name: 'status', in: 'query', description: 'todo, in_progress, review, done', schema: new OA\Schema(type: 'string')), new OA\Parameter(name: 'priority', in: 'query', description: 'low, medium, high, urgent', schema: new OA\Schema(type: 'string')), new OA\Parameter(name: 'assignee_id', in: 'query', schema: new OA\Schema(type: 'integer')), new OA\Parameter(name: 'search', in: 'query', description: 'Matches title and description', schema: new OA\Schema(type: 'string')), new OA\Parameter(name: 'due_before', in: 'query', description: 'ISO date', schema: new OA\Schema(type: 'string')), new OA\Parameter(name: 'due_after', in: 'query', description: 'ISO date', schema: new OA\Schema(type: 'string')), new OA\Parameter(name: 'sort', in: 'query', description: 'Allowlisted column; prefix with - to reverse', schema: new OA\Schema(type: 'string')), new OA\Parameter(name: 'per_page', in: 'query', schema: new OA\Schema(type: 'integer'))],
         responses: [new OA\Response(response: 200, description: 'Paginated tasks'), new OA\Response(response: 403, description: 'Lacks tasks.view'), new OA\Response(response: 422, description: 'Validation failed', content: new OA\JsonContent(ref: '#/components/schemas/ValidationError'))],
     )]
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(IndexTaskRequest $request): AnonymousResourceCollection
     {
         $this->authorize('viewAny', Task::class);
 
-        $filters = $request->validate([
-            'q' => ['nullable', 'string', 'max:255'],
-            'project_id' => ['nullable', 'integer'],
-            'status' => ['nullable', Rule::in(Task::STATUSES)],
-            'priority' => ['nullable', Rule::in(Task::PRIORITIES)],
-            'assignee_id' => ['nullable', 'integer'],
-            'label' => ['nullable', 'string', 'max:50'],
-            'due_before' => ['nullable', 'date'],
-            'due_after' => ['nullable', 'date'],
-            'overdue' => ['nullable', 'boolean'],
-            'roots_only' => ['nullable', 'boolean'],
-            'sort' => ['nullable', Rule::in(Task::SORTABLE)],
-            'direction' => ['nullable', Rule::in(['asc', 'desc'])],
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
-        ]);
+        $filters = $request->validated();
 
         $query = Task::query()
             ->with(['labels', 'project:id,name,color'])
@@ -112,14 +101,11 @@ class TaskController extends Controller
         parameters: [new OA\Parameter(ref: '#/components/parameters/OrganizationHeader'), new OA\Parameter(name: 'project_id', in: 'query', schema: new OA\Schema(type: 'integer')), new OA\Parameter(name: 'assignee_id', in: 'query', schema: new OA\Schema(type: 'integer'))],
         responses: [new OA\Response(response: 200, description: 'Columns in board order: todo, in_progress, review, done'), new OA\Response(response: 403, description: 'Lacks tasks.view')],
     )]
-    public function board(Request $request): JsonResponse
+    public function board(BoardTaskRequest $request): JsonResponse
     {
         $this->authorize('viewAny', Task::class);
 
-        $filters = $request->validate([
-            'project_id' => ['nullable', 'integer'],
-            'assignee_id' => ['nullable', 'integer'],
-        ]);
+        $filters = $request->validated();
 
         $query = Task::query()
             ->with(['labels', 'project:id,name,color'])
@@ -162,11 +148,11 @@ class TaskController extends Controller
         requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['title'], properties: [new OA\Property(property: 'title', type: 'string'), new OA\Property(property: 'description', type: 'string', nullable: true), new OA\Property(property: 'project_id', type: 'integer', nullable: true), new OA\Property(property: 'status', type: 'string', enum: ['todo', 'in_progress', 'review', 'done']), new OA\Property(property: 'priority', type: 'string', enum: ['low', 'medium', 'high', 'urgent']), new OA\Property(property: 'assignee_id', type: 'integer', nullable: true), new OA\Property(property: 'parent_id', type: 'integer', nullable: true, description: 'Set to make this a subtask'), new OA\Property(property: 'due_date', type: 'string', format: 'date', nullable: true), new OA\Property(property: 'estimated_hours', type: 'number', nullable: true), new OA\Property(property: 'tags', type: 'array', items: new OA\Items(type: 'string'))])),
         responses: [new OA\Response(response: 201, description: 'Created'), new OA\Response(response: 402, description: 'Would exceed the plan task quota'), new OA\Response(response: 403, description: 'Lacks tasks.create'), new OA\Response(response: 422, description: 'Validation failed', content: new OA\JsonContent(ref: '#/components/schemas/ValidationError'))],
     )]
-    public function store(Request $request): JsonResponse
+    public function store(StoreTaskRequest $request): JsonResponse
     {
         $this->authorize('create', Task::class);
 
-        $task = $this->service->create($this->validateTask($request), $request->user());
+        $task = $this->service->create($request->validated(), $request->user());
 
         return response()->json([
             'message' => 'Task created.',
@@ -201,11 +187,11 @@ class TaskController extends Controller
         requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(properties: [new OA\Property(property: 'title', type: 'string'), new OA\Property(property: 'description', type: 'string', nullable: true), new OA\Property(property: 'status', type: 'string', enum: ['todo', 'in_progress', 'review', 'done']), new OA\Property(property: 'priority', type: 'string', enum: ['low', 'medium', 'high', 'urgent']), new OA\Property(property: 'assignee_id', type: 'integer', nullable: true), new OA\Property(property: 'due_on', type: 'string', format: 'date'), new OA\Property(property: 'estimated_minutes', type: 'integer', nullable: true), new OA\Property(property: 'labels', type: 'array', items: new OA\Items(type: 'string'))])),
         responses: [new OA\Response(response: 200, description: 'Updated'), new OA\Response(response: 403, description: 'Lacks tasks.update'), new OA\Response(response: 422, description: 'Validation failed', content: new OA\JsonContent(ref: '#/components/schemas/ValidationError'))],
     )]
-    public function update(Request $request, Task $task): JsonResponse
+    public function update(UpdateTaskRequest $request, Task $task): JsonResponse
     {
         $this->authorize('update', $task);
 
-        $task = $this->service->update($task, $this->validateTask($request, updating: true));
+        $task = $this->service->update($task, $request->validated());
 
         return response()->json([
             'message' => 'Task updated.',
@@ -244,46 +230,17 @@ class TaskController extends Controller
         requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['status'], properties: [new OA\Property(property: 'status', type: 'string', enum: ['todo', 'in_progress', 'review', 'done']), new OA\Property(property: 'before_id', type: 'integer', nullable: true, description: 'Task this card is dropped above')])),
         responses: [new OA\Response(response: 200, description: 'Moved'), new OA\Response(response: 403, description: 'Lacks tasks.update'), new OA\Response(response: 422, description: 'Validation failed', content: new OA\JsonContent(ref: '#/components/schemas/ValidationError'))],
     )]
-    public function move(Request $request, Task $task): JsonResponse
+    public function move(MoveTaskRequest $request, Task $task): JsonResponse
     {
         $this->authorize('update', $task);
 
-        $validated = $request->validate([
-            'status' => ['required', Rule::in(Task::STATUSES)],
-            'before_id' => ['nullable', 'integer', 'exists:tasks,id'],
-        ]);
+        $validated = $request->validated();
 
         $task = $this->service->move($task, $validated['status'], $validated['before_id'] ?? null);
 
         return response()->json([
             'message' => 'Task moved.',
             'data' => new TaskResource($task->load('labels')),
-        ]);
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function validateTask(Request $request, bool $updating = false): array
-    {
-        $required = $updating ? 'sometimes' : 'required';
-        $central = config('tenancy.database.central_connection');
-
-        return $request->validate([
-            'title' => [$required, 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:10000'],
-            'project_id' => ['nullable', 'integer', 'exists:projects,id'],
-            'parent_id' => ['nullable', 'integer', 'exists:tasks,id'],
-            'status' => ['sometimes', Rule::in(Task::STATUSES)],
-            'priority' => ['sometimes', Rule::in(Task::PRIORITIES)],
-
-            // Users are central; an unqualified rule would query the tenant DB.
-            'assignee_id' => ['nullable', 'integer', "exists:{$central}.users,id"],
-
-            'due_on' => ['nullable', 'date'],
-            'estimated_minutes' => ['nullable', 'integer', 'min:1', 'max:100000'],
-            'labels' => ['sometimes', 'array', 'max:20'],
-            'labels.*' => ['string', 'max:50'],
         ]);
     }
 }

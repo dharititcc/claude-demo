@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\ConfirmPasswordRequest;
+use App\Http\Requests\Auth\ConfirmTwoFactorRequest;
 use App\Services\TwoFactorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -95,11 +97,9 @@ class TwoFactorController extends Controller
             new OA\Response(response: 422, description: 'Wrong code, or enrolment was never started', content: new OA\JsonContent(ref: '#/components/schemas/ValidationError')),
         ],
     )]
-    public function confirm(Request $request): JsonResponse
+    public function confirm(ConfirmTwoFactorRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'code' => ['required', 'string'],
-        ]);
+        $validated = $request->validated();
 
         $codes = $this->twoFactor->confirm($request->user(), $validated['code']);
 
@@ -129,7 +129,7 @@ class TwoFactorController extends Controller
             new OA\Response(response: 422, description: 'Wrong password', content: new OA\JsonContent(ref: '#/components/schemas/ValidationError')),
         ],
     )]
-    public function destroy(Request $request): JsonResponse
+    public function destroy(ConfirmPasswordRequest $request): JsonResponse
     {
         $this->requirePassword($request);
 
@@ -179,7 +179,7 @@ class TwoFactorController extends Controller
             new OA\Response(response: 422, description: 'Wrong password', content: new OA\JsonContent(ref: '#/components/schemas/ValidationError')),
         ],
     )]
-    public function regenerateRecoveryCodes(Request $request): JsonResponse
+    public function regenerateRecoveryCodes(ConfirmPasswordRequest $request): JsonResponse
     {
         $user = $request->user();
 
@@ -200,11 +200,9 @@ class TwoFactorController extends Controller
     /**
      * @throws ValidationException
      */
-    private function requirePassword(Request $request): void
+    private function requirePassword(ConfirmPasswordRequest $request): void
     {
-        $validated = $request->validate([
-            'password' => ['required', 'string'],
-        ]);
+        $validated = $request->validated();
 
         if (! $this->twoFactor->confirmPassword($request->user(), $validated['password'])) {
             throw ValidationException::withMessages([

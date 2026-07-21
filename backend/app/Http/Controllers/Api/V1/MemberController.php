@@ -6,6 +6,8 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\Role as RoleEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Member\InviteMemberRequest;
+use App\Http\Requests\Member\UpdateMemberRoleRequest;
 use App\Http\Resources\InvitationResource;
 use App\Http\Resources\MemberResource;
 use App\Models\Invitation;
@@ -16,7 +18,6 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use OpenApi\Attributes as OA;
 
@@ -75,14 +76,11 @@ class MemberController extends Controller
         requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['email', 'role'], properties: [new OA\Property(property: 'email', type: 'string', format: 'email'), new OA\Property(property: 'role', type: 'string', enum: ['owner', 'admin', 'manager', 'employee', 'viewer'])])),
         responses: [new OA\Response(response: 201, description: 'Invitation sent'), new OA\Response(response: 403, description: 'Lacks team.invite'), new OA\Response(response: 422, description: 'Validation failed', content: new OA\JsonContent(ref: '#/components/schemas/ValidationError'))],
     )]
-    public function invite(Request $request): JsonResponse
+    public function invite(InviteMemberRequest $request): JsonResponse
     {
         $this->authorize('inviteTeam', tenant());
 
-        $validated = $request->validate([
-            'email' => ['required', 'string', 'email:rfc', 'max:255'],
-            'role' => ['required', Rule::in($this->assignableRoles())],
-        ]);
+        $validated = $request->validated();
 
         [$invitation] = $this->invitations->invite(
             tenant(),
@@ -150,13 +148,11 @@ class MemberController extends Controller
         requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['role'], properties: [new OA\Property(property: 'role', type: 'string', enum: ['owner', 'admin', 'manager', 'employee', 'viewer'])])),
         responses: [new OA\Response(response: 200, description: 'Role updated'), new OA\Response(response: 403, description: 'Lacks team.update/team.remove'), new OA\Response(response: 404, description: 'Not a member'), new OA\Response(response: 422, description: 'Would leave the organization without an owner')],
     )]
-    public function updateRole(Request $request, int $user): JsonResponse
+    public function updateRole(UpdateMemberRoleRequest $request, int $user): JsonResponse
     {
         $this->authorize('manageTeam', tenant());
 
-        $validated = $request->validate([
-            'role' => ['required', Rule::in($this->assignableRoles())],
-        ]);
+        $validated = $request->validated();
 
         $member = $this->memberOrFail($user);
 
@@ -201,24 +197,6 @@ class MemberController extends Controller
         $this->organizations->removeMember(tenant(), $member);
 
         return response()->json(['message' => 'Member removed.']);
-    }
-
-    /**
-     * Roles a caller may hand out. Owner is included only for existing owners:
-     * an admin must not be able to promote anyone (including themselves) to the
-     * role that controls billing and deletion.
-     *
-     * @return array<int, string>
-     */
-    private function assignableRoles(): array
-    {
-        $values = RoleEnum::values();
-
-        if (request()->user()->is_super_admin || request()->user()->hasRole(RoleEnum::Owner->value)) {
-            return $values;
-        }
-
-        return array_values(array_diff($values, [RoleEnum::Owner->value]));
     }
 
     private function memberOrFail(int $userId): User

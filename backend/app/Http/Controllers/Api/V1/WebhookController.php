@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Webhook\StoreWebhookRequest;
+use App\Http\Requests\Webhook\UpdateWebhookRequest;
 use App\Models\WebhookEndpoint;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -57,15 +59,11 @@ class WebhookController extends Controller
         requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['url', 'events'], properties: [new OA\Property(property: 'url', type: 'string', format: 'uri'), new OA\Property(property: 'events', type: 'array', items: new OA\Items(type: 'string'), example: ['customer.created'], description: 'Use * for all events')])),
         responses: [new OA\Response(response: 201, description: 'Created; the response includes the secret'), new OA\Response(response: 403, description: 'Lacks settings.update'), new OA\Response(response: 422, description: 'Validation failed', content: new OA\JsonContent(ref: '#/components/schemas/ValidationError'))],
     )]
-    public function store(Request $request): JsonResponse
+    public function store(StoreWebhookRequest $request): JsonResponse
     {
         $this->authorize('update', tenant());
 
-        $validated = $request->validate([
-            'url' => ['required', 'url', 'max:2048'],
-            'events' => ['required', 'array', 'min:1'],
-            'events.*' => ['string', 'in:'.implode(',', self::EVENTS)],
-        ]);
+        $validated = $request->validated();
 
         $endpoint = WebhookEndpoint::create([
             'url' => $validated['url'],
@@ -91,16 +89,11 @@ class WebhookController extends Controller
         requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(properties: [new OA\Property(property: 'url', type: 'string', format: 'uri'), new OA\Property(property: 'events', type: 'array', items: new OA\Items(type: 'string')), new OA\Property(property: 'is_active', type: 'boolean')])),
         responses: [new OA\Response(response: 200, description: 'Updated'), new OA\Response(response: 403, description: 'Lacks settings.update'), new OA\Response(response: 422, description: 'Validation failed', content: new OA\JsonContent(ref: '#/components/schemas/ValidationError'))],
     )]
-    public function update(Request $request, WebhookEndpoint $webhook): JsonResponse
+    public function update(UpdateWebhookRequest $request, WebhookEndpoint $webhook): JsonResponse
     {
         $this->authorize('update', tenant());
 
-        $validated = $request->validate([
-            'url' => ['sometimes', 'url', 'max:2048'],
-            'events' => ['sometimes', 'array', 'min:1'],
-            'events.*' => ['string', 'in:'.implode(',', self::EVENTS)],
-            'is_active' => ['sometimes', 'boolean'],
-        ]);
+        $validated = $request->validated();
 
         // Re-enabling a circuit-broken endpoint resets its failure count, or it
         // would pause again on the next failure regardless of the fix.

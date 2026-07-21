@@ -6,6 +6,8 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\Permission;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Organization\StoreOrganizationRequest;
+use App\Http\Requests\Organization\UpdateOrganizationRequest;
 use App\Http\Resources\OrganizationResource;
 use App\Services\OrganizationService;
 use Illuminate\Http\JsonResponse;
@@ -65,14 +67,9 @@ class OrganizationController extends Controller
             new OA\Response(response: 422, description: 'Validation failed', content: new OA\JsonContent(ref: '#/components/schemas/ValidationError')),
         ],
     )]
-    public function store(Request $request): JsonResponse
+    public function store(StoreOrganizationRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'timezone' => ['sometimes', 'string', 'timezone'],
-            'currency' => ['sometimes', 'string', 'size:3'],
-            'language' => ['sometimes', 'string', 'max:5'],
-        ]);
+        $validated = $request->validated();
 
         $tenant = $this->organizations->create($request->user(), $validated);
 
@@ -99,17 +96,11 @@ class OrganizationController extends Controller
         requestBody: new OA\RequestBody(content: new OA\MediaType(mediaType: 'multipart/form-data', schema: new OA\Schema(properties: [new OA\Property(property: 'name', type: 'string'), new OA\Property(property: 'timezone', type: 'string'), new OA\Property(property: 'currency', type: 'string'), new OA\Property(property: 'language', type: 'string'), new OA\Property(property: 'logo', type: 'string', format: 'binary', description: 'Image, max 2 MB')]))),
         responses: [new OA\Response(response: 200, description: 'Updated'), new OA\Response(response: 403, description: 'Lacks settings.update'), new OA\Response(response: 422, description: 'Validation failed', content: new OA\JsonContent(ref: '#/components/schemas/ValidationError'))],
     )]
-    public function update(Request $request): JsonResponse
+    public function update(UpdateOrganizationRequest $request): JsonResponse
     {
         $this->authorize('update', tenant());
 
-        $validated = $request->validate([
-            'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'timezone' => ['sometimes', 'required', 'string', 'timezone'],
-            'currency' => ['sometimes', 'required', 'string', 'size:3', 'alpha'],
-            'language' => ['sometimes', 'required', 'string', 'max:5'],
-            'logo' => ['sometimes', 'nullable', 'image', 'max:2048'], // 2 MB
-        ]);
+        $validated = $request->validated();
 
         $tenant = tenant();
 

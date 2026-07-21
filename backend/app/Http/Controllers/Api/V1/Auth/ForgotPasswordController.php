@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\ForgotPasswordRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
 use OpenApi\Attributes as OA;
 
@@ -32,12 +32,8 @@ class ForgotPasswordController extends Controller
             new OA\Response(response: 429, description: 'Too many attempts'),
         ],
     )]
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(ForgotPasswordRequest $request): JsonResponse
     {
-        $request->validate([
-            'email' => ['required', 'string', 'email'],
-        ]);
-
         Password::sendResetLink($request->only('email'));
 
         return response()->json([
