@@ -1,12 +1,17 @@
 ---
 name: backend
-description: Use when working on the Laravel 13 multi-tenant API in backend/ — controllers, models, services, migrations, policies, tenancy, or Pest tests. Covers the database-per-tenant traps that cause silent cross-tenant data leaks, plus the required quality gates.
+description: Use when working on the Laravel 13 multi-tenant API in backend/ — controllers, models, services, migrations, policies, tenancy, or Pest tests. Covers the database-per-tenant traps that cause silent cross-tenant data leaks, the required quality gates, and routes to the detailed topic skills under backend/.
 ---
 
 # Backend (Laravel 13, database-per-tenant)
 
 Work from `backend/`. PHP 8.3+ (Laravel 13 requires ^8.3), MySQL 8, Redis, Sanctum,
 Spatie Permission, stancl/tenancy v3, Cashier, Pest.
+
+This file is the **authoritative, project-specific** entry point. Deeper topic
+guidance lives in the sibling skill folders — see **Topic skills** at the bottom.
+When a topic skill and this file disagree, **this file wins** (topic skills are
+general standards; the tenancy rules below are non-negotiable for this codebase).
 
 ## The one thing to get right
 
@@ -121,3 +126,37 @@ Annotate every endpoint with `#[OA\...]` attributes on the controller method.
 - Stripe/Cashier paths are written to the contract but **unverified against live
   Stripe** — no keys.
 - Social login is **not built**, despite being in the spec.
+
+## Topic skills
+
+Detailed standards live in sibling folders under `.claude/skills/backend/`, each
+its own skill. Reach for them when the task centers on that topic — but the
+tenancy rules above always override anything they say.
+
+| Skill | Folder | Use when |
+|---|---|---|
+| API design | `backend/api/` | Building/reviewing endpoints, resources, versioning, error shapes, rate limiting |
+| Architecture | `backend/architecture/` | Deciding which layer owns logic (Controller → Request → Service → Repository → Handler → Job/Event → Policy) |
+| Code review | `backend/code-review/` | Reviewing a diff/PR or your own change before committing |
+| Commit | `backend/commit/` | Staging and writing Conventional Commit messages |
+| Database | `backend/database/` | Migrations, modeling, relationships, indexing, query correctness |
+| Debugging | `backend/debugging/` | Something is broken/throwing; reproduce → isolate → diagnose |
+| DevOps | `backend/devops/` | Deploy, CI/CD, env/config, workers, scheduler, rollbacks |
+| Docker | `backend/docker/` | Dockerfiles, compose services, container build/runtime issues |
+| Documentation | `backend/documentation/` | READMEs, docs/ guides, ADRs, runbooks, API docs |
+| Git | `backend/git/` | Branching, PRs, conflicts, merge/rebase |
+| Laravel | `backend/laravel/` | General framework conventions and layered feature work |
+| Linux server | `backend/linux-server/` | Nginx/PHP-FPM, TLS, Supervisor, cron, OPcache, hardening |
+| Performance | `backend/performance/` | Slow endpoint, N+1, caching, eager loading, profiling |
+| Queues | `backend/queues/` | Idempotent jobs, retries/backoff, failed jobs, workers, scheduler |
+| Security | `backend/security/` | Authz/authn, validation, mass-assignment, CSRF/XSS/SQLi, secrets |
+| Spatie | `backend/spatie/` | Roles/permissions, gates, seeding permissions, audit logging |
+| Stripe | `backend/stripe/` | Payment intents, webhooks, idempotency, refunds |
+| Telescope | `backend/telescope/` | Local/staging profiling and production-safe config |
+| Testing | `backend/testing/` | Writing tests, factories, HTTP assertions, mocking integrations |
+| Project analysis | `backend/project-analysis/` | Onboarding, navigating the codebase, planning a cross-module change |
+| Frontend (API surface) | `backend/frontend/` | The backend's browser-facing pages + the JSON contract the React SPA depends on — **not** Blade UI |
+
+> **Note.** `backend/frontend/` covers only the *backend side* of the UI
+> boundary (the API is headless). Actual React UI work uses the **top-level
+> `frontend` skill** and the `frontend/` app.
