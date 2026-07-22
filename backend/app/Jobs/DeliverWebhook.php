@@ -7,6 +7,7 @@ namespace App\Jobs;
 use App\Models\Tenant;
 use App\Models\WebhookDelivery;
 use App\Models\WebhookEndpoint;
+use GuzzleHttp\TransferStats;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -75,6 +76,24 @@ class DeliverWebhook implements ShouldQueue
 
             try {
                 $response = Http::timeout(10)
+                    // SSRF defence at delivery time. The URL was checked against
+                    // internal ranges when it was stored (see PublicHttpUrl), but
+                    // two gaps remain at runtime: a redirect could bounce us into
+                    // an internal host, and DNS could have changed to an internal
+                    // address since validation (rebinding). So never follow a
+                    // redirect, and re-check the address actually connected to.
+                    ->withoutRedirecting()
+                    ->withOptions(['on_stats' => function (TransferStats $stats): void {
+                        $ip = $stats->getHandlerStat('primary_ip');
+
+                        if (is_string($ip) && $ip !== '' && ! filter_var(
+                            $ip,
+                            FILTER_VALIDATE_IP,
+                            FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE,
+                        )) {
+                            throw new \RuntimeException("Blocked webhook delivery to internal address {$ip}.");
+                        }
+                    }])
                     ->withHeaders([
                         'Content-Type' => 'application/json',
                         'X-Webhook-Event' => $this->event,

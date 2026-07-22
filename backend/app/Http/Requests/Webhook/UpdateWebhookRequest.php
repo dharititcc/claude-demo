@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Webhook;
 
 use App\Http\Controllers\Api\V1\WebhookController;
+use App\Rules\PublicHttpUrl;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -25,7 +26,8 @@ class UpdateWebhookRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'url' => ['sometimes', 'url', 'max:2048'],
+            // SSRF guard — see App\Rules\PublicHttpUrl and StoreWebhookRequest.
+            'url' => ['sometimes', 'max:2048', new PublicHttpUrl],
             'events' => ['sometimes', 'array', 'min:1'],
             'events.*' => ['string', 'in:'.implode(',', WebhookController::EVENTS)],
             'is_active' => ['sometimes', 'boolean'],

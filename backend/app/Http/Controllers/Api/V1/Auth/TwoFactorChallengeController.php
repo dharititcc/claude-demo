@@ -74,6 +74,7 @@ class TwoFactorChallengeController extends Controller
 
         if (! $passed) {
             $this->auth->recordFailedTwoFactorAttempt($challenge);
+            $this->auth->recordTwoFactorFailure($request, $user);
 
             throw ValidationException::withMessages([
                 'code' => __('That code is not valid.'),
@@ -83,6 +84,10 @@ class TwoFactorChallengeController extends Controller
         // Spend the handle only now, so a mistyped digit costs an attempt rather
         // than the whole sign-in.
         $this->auth->completeTwoFactorChallenge($challenge);
+
+        // Only now is the login genuinely complete — record it and stamp
+        // last_login_*. The password step recorded a pending row, not a success.
+        $this->auth->recordSuccessfulLogin($request, $user);
 
         $user->load('organizations');
 

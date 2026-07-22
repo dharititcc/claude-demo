@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\LoginHistory;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use PragmaRX\Google2FA\Google2FA;
@@ -348,4 +349,49 @@ it('never exposes the secret or recovery codes through the user resource', funct
 
     expect($me->json())->not->toHaveKey('data.two_factor_secret')
         ->and($me->json())->not->toHaveKey('data.two_factor_recovery_codes');
+});
+
+it('does not record a successful login until the 2FA challenge is completed', function () {
+    [$user, , $secret] = enrolTwoFactor('audit-2fa@example.test');
+    forgetSpentStep($user);
+
+    // Password stage: the password is correct but the second factor is still
+    // owed, so this is NOT a successful login and must not stamp last_login_*.
+    $challenge = $this->postJson('/api/v1/auth/login', [
+        'email' => 'audit-2fa@example.test',
+        'password' => TWO_FACTOR_PASSWORD,
+    ])->assertStatus(202)->json('data.challenge_token');
+
+    $pending = LoginHistory::where('user_id', $user->id)->latest('id')->first();
+    expect($pending->successful)->toBeFalse()
+        ->and($pending->reason)->toBe('password_ok_2fa_pending')
+        ->and($user->refresh()->last_login_at)->toBeNull();
+
+    // Completing the challenge is the genuine login: a successful row is written
+    // and last_login_* is stamped only now.
+    $this->postJson('/api/v1/auth/2fa/challenge', [
+        'challenge_token' => $challenge,
+        'code' => currentOtp($secret),
+    ])->assertOk();
+
+    expect(LoginHistory::where('user_id', $user->id)->where('successful', true)->exists())->toBeTrue()
+        ->and($user->refresh()->last_login_at)->not->toBeNull();
+});
+
+it('records a failed second-factor code in the login history', function () {
+    [$user, , $secret] = enrolTwoFactor('audit-2fa-fail@example.test');
+    forgetSpentStep($user);
+
+    $challenge = $this->postJson('/api/v1/auth/login', [
+        'email' => 'audit-2fa-fail@example.test',
+        'password' => TWO_FACTOR_PASSWORD,
+    ])->json('data.challenge_token');
+
+    $this->postJson('/api/v1/auth/2fa/challenge', [
+        'challenge_token' => $challenge,
+        'code' => '000000',
+    ])->assertStatus(422);
+
+    $failed = LoginHistory::where('user_id', $user->id)->where('reason', 'invalid_2fa_code')->first();
+    expect($failed)->not->toBeNull()->and($failed->successful)->toBeFalse();
 });

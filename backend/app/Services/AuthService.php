@@ -102,12 +102,20 @@ class AuthService
         }
 
         RateLimiter::clear($key);
-        $this->record($request, $email, $user->id, true);
 
-        $user->forceFill([
-            'last_login_at' => now(),
-            'last_login_ip' => $request->ip(),
-        ])->save();
+        // A correct password is not yet a login for a 2FA account: the token is
+        // only issued once the challenge is completed. Recording success here —
+        // and stamping last_login_* — would corrupt the login-history intrusion
+        // signal, showing a "successful" sign-in for someone who never got in.
+        // The real outcome (success, or a failed code) is recorded from the
+        // challenge step instead.
+        if ($user->hasTwoFactorEnabled()) {
+            $this->record($request, $email, $user->id, false, 'password_ok_2fa_pending');
+
+            return $user;
+        }
+
+        $this->recordSuccessfulLogin($request, $user);
 
         return $user;
     }
@@ -119,6 +127,33 @@ class AuthService
     public function issueToken(User $user, string $deviceName): string
     {
         return $user->createToken($deviceName)->plainTextToken;
+    }
+
+    /**
+     * Record a completed login and stamp the user's last-seen marker.
+     *
+     * Called by the password path for non-2FA accounts, and by the two-factor
+     * challenge step once the second factor verifies — so login_histories and
+     * last_login_* reflect only genuine, fully-authenticated sign-ins.
+     */
+    public function recordSuccessfulLogin(Request $request, User $user): void
+    {
+        $this->record($request, $user->email, $user->id, true);
+
+        $user->forceFill([
+            'last_login_at' => now(),
+            'last_login_ip' => $request->ip(),
+        ])->save();
+    }
+
+    /**
+     * Record a failed second-factor attempt. The challenge-attempt counter tears
+     * the handle up after enough misses, but that is invisible to the account
+     * owner without a row here — so 2FA brute-force stays visible in the history.
+     */
+    public function recordTwoFactorFailure(Request $request, User $user): void
+    {
+        $this->record($request, $user->email, $user->id, false, 'invalid_2fa_code');
     }
 
     /**

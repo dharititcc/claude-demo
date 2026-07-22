@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Webhook;
 
 use App\Http\Controllers\Api\V1\WebhookController;
+use App\Rules\PublicHttpUrl;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -25,7 +26,9 @@ class StoreWebhookRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'url' => ['required', 'url', 'max:2048'],
+            // Blocks internal/reserved hosts and non-http schemes (SSRF). Delivery
+            // adds the runtime IP re-check; see App\Rules\PublicHttpUrl.
+            'url' => ['required', 'max:2048', new PublicHttpUrl],
             'events' => ['required', 'array', 'min:1'],
             'events.*' => ['string', 'in:'.implode(',', WebhookController::EVENTS)],
         ];
