@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\V1\Admin\ActivityController as AdminActivityController;
 use App\Http\Controllers\Api\V1\Admin\ImpersonationController as AdminImpersonationController;
 use App\Http\Controllers\Api\V1\Admin\OrganizationController as AdminOrganizationController;
+use App\Http\Controllers\Api\V1\Admin\PlanController as AdminPlanController;
 use App\Http\Controllers\Api\V1\AttachmentController;
 use App\Http\Controllers\Api\V1\AuditLogController;
 use App\Http\Controllers\Api\V1\Auth\EmailVerificationController;
@@ -159,6 +160,14 @@ Route::prefix('v1')->group(function () {
 
             // Start impersonating a member of an organization.
             Route::post('organizations/{organization}/impersonate', [AdminImpersonationController::class, 'start'])->name('organizations.impersonate');
+
+            // ─── Plan master: the subscription catalogue ───
+            // Central and platform-wide, like everything else under `admin`.
+            Route::get('plans', [AdminPlanController::class, 'index'])->name('plans.index');
+            Route::post('plans', [AdminPlanController::class, 'store'])->name('plans.store');
+            Route::get('plans/{plan}', [AdminPlanController::class, 'show'])->whereNumber('plan')->name('plans.show');
+            Route::put('plans/{plan}', [AdminPlanController::class, 'update'])->whereNumber('plan')->name('plans.update');
+            Route::delete('plans/{plan}', [AdminPlanController::class, 'destroy'])->whereNumber('plan')->name('plans.destroy');
 
             // The central audit trail of everything above.
             Route::get('activity', [AdminActivityController::class, 'index'])->name('activity.index');

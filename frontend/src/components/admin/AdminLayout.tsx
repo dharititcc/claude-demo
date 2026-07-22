@@ -3,6 +3,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 import {
   ArrowLeft,
   Building2,
+  CreditCard,
   LayoutDashboard,
   Menu,
   Moon,
@@ -20,6 +21,7 @@ import { Spinner } from '@/components/ui/Spinner'
 const navigation = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/admin/organizations', label: 'Organizations', icon: Building2, end: false },
+  { to: '/admin/plans', label: 'Plans', icon: CreditCard, end: false },
   { to: '/admin/activity', label: 'Audit Log', icon: ScrollText, end: false },
 ]
 

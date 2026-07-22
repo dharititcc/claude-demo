@@ -5,7 +5,12 @@ import { adminService } from '@/services/admin'
 import { beginImpersonation, endImpersonation } from '@/services/api'
 import { apiErrorMessage } from './useAuth'
 import { useAuthStore } from '@/store/auth'
-import type { AdminActivityFilters, AdminOrgFilters, LimitOverrides } from '@/types/admin'
+import type {
+  AdminActivityFilters,
+  AdminOrgFilters,
+  AdminPlanPayload,
+  LimitOverrides,
+} from '@/types/admin'
 
 /**
  * Admin cache keys. Not org-scoped — these read across every organization, so
@@ -17,6 +22,7 @@ export const adminKeys = {
   organization: (id: string) => ['admin', 'organizations', 'detail', id] as const,
   stats: ['admin', 'stats'] as const,
   activity: (filters: AdminActivityFilters) => ['admin', 'activity', filters] as const,
+  plans: ['admin', 'plans'] as const,
 }
 
 export function useAdminStats() {
@@ -179,5 +185,57 @@ export function useStopImpersonation() {
         navigate('/login', { replace: true })
       }
     },
+  })
+}
+
+// ─── Plan master ───
+
+export function useAdminPlans() {
+  return useQuery({
+    queryKey: adminKeys.plans,
+    queryFn: () => adminService.listPlans(),
+    staleTime: 60_000,
+  })
+}
+
+export function useCreatePlan() {
+  const invalidate = useInvalidateAdmin()
+  return useMutation({
+    mutationFn: (payload: AdminPlanPayload) => adminService.createPlan(payload),
+    onSuccess: () => {
+      invalidate()
+      toast.success('Plan created.')
+    },
+    onError: (error) => toast.error(apiErrorMessage(error, 'Could not create the plan.')),
+  })
+}
+
+export function useUpdatePlan() {
+  const invalidate = useInvalidateAdmin()
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: AdminPlanPayload }) =>
+      adminService.updatePlan(id, payload),
+    onSuccess: () => {
+      invalidate()
+      toast.success('Plan updated.')
+    },
+    onError: (error) => toast.error(apiErrorMessage(error, 'Could not update the plan.')),
+  })
+}
+
+/**
+ * Deleting is refused server-side while organizations are on the plan, and the
+ * 422 explains why — so the error message is surfaced as-is rather than being
+ * replaced with a generic one.
+ */
+export function useDeletePlan() {
+  const invalidate = useInvalidateAdmin()
+  return useMutation({
+    mutationFn: (id: number) => adminService.deletePlan(id),
+    onSuccess: () => {
+      invalidate()
+      toast.success('Plan deleted.')
+    },
+    onError: (error) => toast.error(apiErrorMessage(error, 'Could not delete the plan.')),
   })
 }

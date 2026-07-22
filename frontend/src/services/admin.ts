@@ -6,6 +6,8 @@ import type {
   AdminOrganization,
   AdminOrgFilters,
   AdminPaginated,
+  AdminPlan,
+  AdminPlanPayload,
   AdminStats,
   ImpersonationSession,
   LimitOverrides,
@@ -96,6 +98,29 @@ export const adminService = {
   /** Called with the impersonation token active; revokes it server-side. */
   async stopImpersonation(): Promise<void> {
     await api.post('/v1/impersonation/stop')
+  },
+
+  // ─── Plan master ───
+  // The catalogue, including inactive plans. Not the same endpoint the billing
+  // page uses: that one only lists what a customer can buy.
+
+  async listPlans(): Promise<AdminPlan[]> {
+    const { data } = await api.get<{ data: AdminPlan[] }>('/v1/admin/plans')
+    return data.data
+  },
+
+  async createPlan(payload: AdminPlanPayload): Promise<AdminPlan> {
+    const { data } = await api.post<{ data: AdminPlan }>('/v1/admin/plans', payload)
+    return data.data
+  },
+
+  async updatePlan(id: number, payload: AdminPlanPayload): Promise<AdminPlan> {
+    const { data } = await api.put<{ data: AdminPlan }>(`/v1/admin/plans/${id}`, payload)
+    return data.data
+  },
+
+  async deletePlan(id: number): Promise<void> {
+    await api.delete(`/v1/admin/plans/${id}`)
   },
 }
 

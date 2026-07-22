@@ -577,6 +577,260 @@
                 ]
             }
         },
+        "/api/v1/admin/plans": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "The whole plan catalogue",
+                "description": "Super-admin only. Unlike GET /billing/plans, this includes inactive plans and exposes the Stripe price ids, because an administrator maintains the catalogue rather than shopping from it. Each plan carries organizations_count so the UI can tell which plans are in use — a plan in use cannot be deleted.",
+                "operationId": "f20bc0c415fdda61a74a65ef776ec3c4",
+                "responses": {
+                    "200": {
+                        "description": "Plans ordered by sort_order"
+                    },
+                    "404": {
+                        "description": "Not a super admin (the admin surface is not advertised)"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Add a plan to the catalogue",
+                "description": "The slug is derived from the name when omitted, and is the handle billing/subscribe takes. Stripe price ids are optional so a plan can be drafted before its Stripe prices exist — but an interval with no price id cannot be subscribed to, which the response reports as stripe.monthly_ready / stripe.annual_ready.",
+                "operationId": "de263e6c66ebdc9e78b15f3b3729382f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "currency"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "slug": {
+                                        "description": "Derived from name when omitted",
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "stripe_monthly_price_id": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "stripe_annual_price_id": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "monthly_amount": {
+                                        "description": "Minor units, display only",
+                                        "type": "integer"
+                                    },
+                                    "annual_amount": {
+                                        "description": "Minor units, display only",
+                                        "type": "integer"
+                                    },
+                                    "currency": {
+                                        "type": "string",
+                                        "example": "USD"
+                                    },
+                                    "trial_days": {
+                                        "type": "integer"
+                                    },
+                                    "max_users": {
+                                        "description": "null = unlimited, 0 = none allowed",
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "max_customers": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "max_storage_mb": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "features": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "is_active": {
+                                        "type": "boolean"
+                                    },
+                                    "sort_order": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    },
+                    "404": {
+                        "description": "Not a super admin"
+                    },
+                    "422": {
+                        "description": "Validation failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/plans/{plan}": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "One plan",
+                "operationId": "789b910c156059ab9eb8d9e6757cc4d8",
+                "parameters": [
+                    {
+                        "name": "plan",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The plan"
+                    },
+                    "404": {
+                        "description": "Unknown plan, or not a super admin"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Edit a plan",
+                "description": "A partial edit: an absent key is left untouched, while a key sent as null clears it. That distinction matters for the limits, where null means unlimited and 0 means none allowed. Limits take effect on the next request — UsageService reads them per request rather than caching them onto the organization.",
+                "operationId": "010eb3e19b35bcd16eda1236bf96df54",
+                "parameters": [
+                    {
+                        "name": "plan",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated"
+                    },
+                    "404": {
+                        "description": "Unknown plan, or not a super admin"
+                    },
+                    "422": {
+                        "description": "Validation failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Remove a plan from the catalogue",
+                "description": "Refused with 422 while any organization is on the plan. tenants.plan_id carries no foreign key, so deleting would leave those rows pointing at a plan that no longer exists, and UsageService would silently fall back to the cheapest active plan — re-quotaing them without telling anyone. Deactivate instead: the plan stops being offered while current subscribers keep their limits.",
+                "operationId": "8a79ceb3d96895144c975e94637d794e",
+                "parameters": [
+                    {
+                        "name": "plan",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted"
+                    },
+                    "404": {
+                        "description": "Unknown plan, or not a super admin"
+                    },
+                    "422": {
+                        "description": "The plan is still in use",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/customers/{customer}/attachments": {
             "post": {
                 "tags": [

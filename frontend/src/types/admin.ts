@@ -129,3 +129,58 @@ export interface ImpersonationState {
   organization_id: string
   expires_at: string | null
 }
+
+/**
+ * A plan as the Super Admin sees it. Distinct from the member-facing `Plan`:
+ * this includes inactive plans, exposes the Stripe wiring, and reports how many
+ * organizations are on it (a plan in use cannot be deleted).
+ */
+export interface AdminPlan {
+  id: number
+  name: string
+  slug: string
+  description: string | null
+  // Minor units, display only — Stripe decides what is charged.
+  monthly_amount: number
+  annual_amount: number
+  currency: string
+  trial_days: number
+  limits: {
+    // null = unlimited, deliberately distinct from 0 ("none allowed").
+    users: number | null
+    customers: number | null
+    storage_mb: number | null
+  }
+  features: string[]
+  is_active: boolean
+  sort_order: number
+  stripe: {
+    monthly_price_id: string | null
+    annual_price_id: string | null
+    // False means that interval cannot be subscribed to at all.
+    monthly_ready: boolean
+    annual_ready: boolean
+  }
+  organizations_count: number
+  created_at: string | null
+  updated_at: string | null
+}
+
+/** Create/edit payload. Absent key = leave alone; null limit = unlimited. */
+export type AdminPlanPayload = Partial<{
+  name: string
+  slug: string
+  description: string | null
+  stripe_monthly_price_id: string | null
+  stripe_annual_price_id: string | null
+  monthly_amount: number
+  annual_amount: number
+  currency: string
+  trial_days: number
+  max_users: number | null
+  max_customers: number | null
+  max_storage_mb: number | null
+  features: string[]
+  is_active: boolean
+  sort_order: number
+}>
