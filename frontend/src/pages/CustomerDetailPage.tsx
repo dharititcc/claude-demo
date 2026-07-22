@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import { safeHttpUrl } from '@/lib/utils'
+import { formatDateTime } from '@/lib/date'
 import type { CustomerStatus } from '@/types'
 
 const statusVariant: Record<CustomerStatus, 'success' | 'default' | 'warning' | 'danger'> = {
@@ -207,7 +208,7 @@ export default function CustomerDetailPage() {
                     <li key={n.id} className="py-3">
                       <p className="whitespace-pre-wrap text-sm">{n.body}</p>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {n.created_at ? new Date(n.created_at).toLocaleString() : ''}
+                        {n.created_at ? formatDateTime(n.created_at) : ''}
                       </p>
                     </li>
                   ))}

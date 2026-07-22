@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
+import { formatDate } from '@/lib/date'
 import type { Role } from '@/types'
 
 const ROLES: Role[] = ['owner', 'admin', 'manager', 'employee', 'viewer']
@@ -215,7 +216,7 @@ export default function TeamPage() {
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
                         {member.last_login_at
-                          ? new Date(member.last_login_at).toLocaleDateString()
+                          ? formatDate(member.last_login_at)
                           : 'Never'}
                       </td>
                       <td className="px-4 py-3 text-right">
@@ -256,7 +257,7 @@ export default function TeamPage() {
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{invitation.email}</p>
                   <p className="text-xs text-muted-foreground">
-                    {invitation.role} · expires {new Date(invitation.expires_at).toLocaleDateString()}
+                    {invitation.role} · expires {formatDate(invitation.expires_at)}
                   </p>
                 </div>
                 <Button

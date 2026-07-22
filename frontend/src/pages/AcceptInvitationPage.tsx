@@ -10,6 +10,7 @@ import { apiErrorMessage } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Spinner } from '@/components/ui/Spinner'
+import { formatDate } from '@/lib/date'
 
 /**
  * Landing page for an emailed invitation link.
@@ -121,7 +122,7 @@ export default function AcceptInvitationPage() {
         </div>
 
         <p className="mt-6 text-xs text-muted-foreground">
-          Expires {new Date(invitation.expires_at).toLocaleDateString()}
+          Expires {formatDate(invitation.expires_at)}
         </p>
       </div>
     </div>

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { authService } from '@/services/auth'
 import { apiErrorMessage } from '@/hooks/useAuth'
+import { formatDate } from '@/lib/date'
 
 /**
  * The one moment the full recovery-code list is worth showing.
@@ -186,7 +187,7 @@ export default function TwoFactorSettings() {
             <p className="text-sm text-muted-foreground">
               Enabled{' '}
               {status.data.confirmed_at
-                ? new Date(status.data.confirmed_at).toLocaleDateString()
+                ? formatDate(status.data.confirmed_at)
                 : ''}
               . {status.data.recovery_codes_remaining} recovery{' '}
               {status.data.recovery_codes_remaining === 1 ? 'code' : 'codes'} remaining.

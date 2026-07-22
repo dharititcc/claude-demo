@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import { cn, safeHttpUrl } from '@/lib/utils'
+import { formatDate } from '@/lib/date'
 import type { BillingInterval, Plan, UsageMetric } from '@/types'
 
 function money(minorUnits: number, currency: string): string {
@@ -151,7 +152,7 @@ export default function BillingPage() {
                 <p className="text-sm font-medium">Your subscription is ending</p>
                 <p className="text-sm text-muted-foreground">
                   Access continues until{' '}
-                  {subscription.ends_at && new Date(subscription.ends_at).toLocaleDateString()}.
+                  {subscription.ends_at && formatDate(subscription.ends_at)}.
                 </p>
               </div>
             </div>
@@ -180,14 +181,14 @@ export default function BillingPage() {
                 )}
                 {subscription.on_trial && subscription.trial_ends_at && (
                   <Badge variant="warning">
-                    Trial ends {new Date(subscription.trial_ends_at).toLocaleDateString()}
+                    Trial ends {formatDate(subscription.trial_ends_at)}
                   </Badge>
                 )}
                 {subscription.interval && <Badge variant="muted">{subscription.interval}</Badge>}
               </div>
               {subscription.renews_at && !subscription.cancelled && (
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Renews {new Date(subscription.renews_at).toLocaleDateString()}
+                  Renews {formatDate(subscription.renews_at)}
                 </p>
               )}
             </div>
@@ -326,7 +327,7 @@ export default function BillingPage() {
                         </Badge>
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(invoice.date).toLocaleDateString()} · {invoice.total}
+                        {formatDate(invoice.date)} · {invoice.total}
                         {invoice.tax && ` (incl. ${invoice.tax} tax)`}
                       </p>
                     </div>

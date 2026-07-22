@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import TwoFactorSettings from '@/components/auth/TwoFactorSettings'
+import { formatDate } from '@/lib/date'
 
 const schema = z.object({
   name: z.string().min(1, 'Name is required.').max(255),
@@ -243,7 +244,7 @@ export default function SettingsPage() {
             </p>
             {org.trial_ends_at && (
               <p className="mt-1 text-xs text-muted-foreground">
-                Trial ends {new Date(org.trial_ends_at).toLocaleDateString()}
+                Trial ends {formatDate(org.trial_ends_at)}
               </p>
             )}
           </div>

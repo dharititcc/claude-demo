@@ -18,6 +18,7 @@ import { useAuthStore } from '@/store/auth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Spinner } from '@/components/ui/Spinner'
+import { formatDate } from '@/lib/date'
 import type { DashboardStats } from '@/types'
 
 const STATUS_COLORS: Record<string, string> = {
@@ -131,7 +132,7 @@ export default function DashboardPage() {
         </div>
         {data.organization.on_trial && data.organization.trial_ends_at && (
           <Badge variant="warning">
-            Trial ends {new Date(data.organization.trial_ends_at).toLocaleDateString()}
+            Trial ends {formatDate(data.organization.trial_ends_at)}
           </Badge>
         )}
       </div>

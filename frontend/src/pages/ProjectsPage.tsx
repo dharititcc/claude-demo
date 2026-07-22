@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
+import { formatDate } from '@/lib/date'
 import type { Project, ProjectStatus } from '@/types'
 
 const statusVariant: Record<ProjectStatus, 'success' | 'default' | 'warning' | 'danger' | 'muted'> = {
@@ -199,7 +200,7 @@ function ProjectCard({
 
         {project.due_on && (
           <p className={`mt-3 text-xs ${project.is_overdue ? 'font-medium text-destructive' : 'text-muted-foreground'}`}>
-            Due {new Date(project.due_on).toLocaleDateString()}
+            Due {formatDate(project.due_on)}
             {project.is_overdue && ' · overdue'}
           </p>
         )}

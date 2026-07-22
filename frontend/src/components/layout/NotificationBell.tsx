@@ -5,6 +5,7 @@ import { api } from '@/services/api'
 import { useAuthStore } from '@/store/auth'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
+import { formatDateTime } from '@/lib/date'
 
 interface NotificationItem {
   id: string
@@ -101,7 +102,7 @@ export function NotificationBell() {
                       )}
                       {n.created_at && (
                         <p className="mt-0.5 text-[11px] text-muted-foreground">
-                          {new Date(n.created_at).toLocaleString()}
+                          {formatDateTime(n.created_at)}
                         </p>
                       )}
                     </li>

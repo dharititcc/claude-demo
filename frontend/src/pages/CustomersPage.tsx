@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import { CustomerFormDialog } from '@/components/customers/CustomerFormDialog'
+import { formatDate } from '@/lib/date'
 import type { Customer, CustomerFilters, CustomerStatus } from '@/types'
 
 const STATUSES: Array<CustomerStatus | ''> = ['', 'lead', 'active', 'inactive', 'churned']
@@ -217,7 +218,7 @@ export default function CustomersPage() {
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {customer.created_at
-                        ? new Date(customer.created_at).toLocaleDateString()
+                        ? formatDate(customer.created_at)
                         : '—'}
                     </td>
                     <td className="px-4 py-3">
