@@ -10,6 +10,7 @@ use App\Models\Subscription;
 use App\Models\SubscriptionItem;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Services\StripePriceCatalogue;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -27,7 +28,9 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        // Shared per request so validating a price id and then reading its
+        // amount is one Stripe call, not two (see StripePriceCatalogue).
+        $this->app->singleton(StripePriceCatalogue::class);
     }
 
     public function boot(): void

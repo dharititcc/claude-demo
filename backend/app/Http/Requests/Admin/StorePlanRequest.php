@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin;
 
+use App\Rules\StripePrice;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -44,8 +45,8 @@ class StorePlanRequest extends FormRequest
              * it cannot be subscribed to — see AdminPlanResource's `stripe`
              * block, which reports that state rather than hiding it.
              */
-            'stripe_monthly_price_id' => ['nullable', 'string', 'max:255'],
-            'stripe_annual_price_id' => ['nullable', 'string', 'max:255'],
+            'stripe_monthly_price_id' => ['nullable', 'string', 'max:255', new StripePrice('month')],
+            'stripe_annual_price_id' => ['nullable', 'string', 'max:255', new StripePrice('year')],
 
             // Minor units (cents), display only. Never used to charge.
             'monthly_amount' => ['nullable', 'integer', 'min:0'],

@@ -604,7 +604,7 @@
                     "Admin"
                 ],
                 "summary": "Add a plan to the catalogue",
-                "description": "The slug is derived from the name when omitted, and is the handle billing/subscribe takes. Stripe price ids are optional so a plan can be drafted before its Stripe prices exist — but an interval with no price id cannot be subscribed to, which the response reports as stripe.monthly_ready / stripe.annual_ready.",
+                "description": "The slug is derived from the name when omitted, and is the handle billing/subscribe takes. Stripe price ids are optional so a plan can be drafted before its Stripe prices exist — but an interval with no price id cannot be subscribed to, which the response reports as stripe.monthly_ready / stripe.annual_ready. A price id that IS supplied is verified against Stripe (exists, active, recurring, right interval, right currency) and the display amount is then taken from Stripe rather than the submitted value, because Stripe is the source of truth for money. Verification is skipped when no Stripe secret is configured.",
                 "operationId": "de263e6c66ebdc9e78b15f3b3729382f",
                 "requestBody": {
                     "required": true,

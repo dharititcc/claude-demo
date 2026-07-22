@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin;
 
+use App\Rules\StripePrice;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -28,17 +29,22 @@ class UpdatePlanRequest extends FormRequest
     {
         $central = config('tenancy.database.central_connection');
 
+        $plan = $this->route('plan');
+
         // Ignore this plan's own row, or renaming without changing the slug
         // would collide with itself.
-        $planId = $this->route('plan')?->id;
+        $planId = $plan?->id;
 
         return [
             'name' => ['sometimes', 'string', 'max:255'],
             'slug' => ['sometimes', 'string', 'max:255', 'regex:/^[a-z0-9]+(-[a-z0-9]+)*$/', Rule::unique("{$central}.plans", 'slug')->ignore($planId)],
             'description' => ['sometimes', 'nullable', 'string', 'max:1000'],
 
-            'stripe_monthly_price_id' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'stripe_annual_price_id' => ['sometimes', 'nullable', 'string', 'max:255'],
+            // The plan's stored currency is passed as a fallback: a partial edit
+            // that changes only the price id does not resend `currency`, and the
+            // rule still has to check the two agree.
+            'stripe_monthly_price_id' => ['sometimes', 'nullable', 'string', 'max:255', new StripePrice('month', $plan?->currency)],
+            'stripe_annual_price_id' => ['sometimes', 'nullable', 'string', 'max:255', new StripePrice('year', $plan?->currency)],
 
             'monthly_amount' => ['sometimes', 'integer', 'min:0'],
             'annual_amount' => ['sometimes', 'integer', 'min:0'],

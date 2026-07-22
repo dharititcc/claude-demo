@@ -235,7 +235,8 @@ export function PlanFormDialog({
           <fieldset className="rounded-md border p-4">
             <legend className="px-1 text-sm font-medium">Pricing</legend>
             <p className="mb-3 text-xs text-muted-foreground">
-              Shown to customers. Stripe decides what is actually charged.
+              Shown to customers. When an interval has a Stripe price id, its amount is taken from
+              Stripe on save and what you type here is ignored — Stripe decides what is charged.
             </p>
 
             <div className="grid gap-4 sm:grid-cols-3">
