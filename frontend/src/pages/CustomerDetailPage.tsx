@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
+import { safeHttpUrl } from '@/lib/utils'
 import type { CustomerStatus } from '@/types'
 
 const statusVariant: Record<CustomerStatus, 'success' | 'default' | 'warning' | 'danger'> = {
@@ -254,7 +255,7 @@ export default function CustomerDetailPage() {
                         <p className="text-xs text-muted-foreground">{formatBytes(a.size)}</p>
                       </div>
                       <div className="flex shrink-0 gap-1">
-                        <a href={a.url} target="_blank" rel="noreferrer" download>
+                        <a href={safeHttpUrl(a.url)} target="_blank" rel="noreferrer" download>
                           <Button variant="ghost" size="icon" aria-label={`Download ${a.filename}`}>
                             <Download size={15} />
                           </Button>

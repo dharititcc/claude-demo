@@ -35,8 +35,10 @@ class UpdateTaskRequest extends FormRequest
             'status' => ['sometimes', Rule::in(Task::STATUSES)],
             'priority' => ['sometimes', Rule::in(Task::PRIORITIES)],
 
-            // Users are central; an unqualified rule would query the tenant DB.
-            'assignee_id' => ['nullable', 'integer', "exists:{$central}.users,id"],
+            // Assignee must be a member of this organization: membership is enforced
+            // against the central pivot, so a user id from another tenant — which
+            // merely exists in the central users table — is rejected.
+            'assignee_id' => ['nullable', 'integer', Rule::exists("{$central}.organization_user", 'user_id')->where('tenant_id', tenant()->id)],
 
             'due_on' => ['nullable', 'date'],
             'estimated_minutes' => ['nullable', 'integer', 'min:1', 'max:100000'],

@@ -34,9 +34,10 @@ class UpdateProjectRequest extends FormRequest
             'color' => ['sometimes', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'customer_id' => ['nullable', 'integer', 'exists:customers,id'],
 
-            // Qualified with the central connection: users live there, and an
-            // unqualified rule would look for the table in the tenant database.
-            'owner_id' => ['nullable', 'integer', "exists:{$central}.users,id"],
+            // Owner must be a member of this organization: membership is enforced
+            // against the central pivot, so a user id from another tenant — which
+            // merely exists in the central users table — is rejected.
+            'owner_id' => ['nullable', 'integer', Rule::exists("{$central}.organization_user", 'user_id')->where('tenant_id', tenant()->id)],
 
             'starts_on' => ['nullable', 'date'],
             'due_on' => ['nullable', 'date', 'after_or_equal:starts_on'],

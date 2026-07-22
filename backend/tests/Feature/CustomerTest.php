@@ -330,6 +330,28 @@ it('rejects an invalid status', function () {
         ->assertJsonValidationErrors('status');
 });
 
+it('rejects an owner_id belonging to another organizations user', function () {
+    [, $tenant, $token] = registerUser('owncheck@example.test', 'OwnCheck Org');
+
+    // A user in a different organization: exists in the central users table, but
+    // is not a member of this tenant, so must be rejected on owner_id.
+    [$foreign] = registerUser('foreign@example.test', 'Foreign Org');
+
+    $this->withHeaders(orgHeaders($token, $tenant))
+        ->postJson('/api/v1/customers', ['name' => 'Cross Tenant', 'owner_id' => $foreign->id])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('owner_id');
+});
+
+it('accepts an owner_id belonging to a member of this organization', function () {
+    [$user, $tenant, $token] = registerUser('ownmember@example.test', 'OwnMember Org');
+
+    $this->withHeaders(orgHeaders($token, $tenant))
+        ->postJson('/api/v1/customers', ['name' => 'Own Member', 'owner_id' => $user->id])
+        ->assertCreated()
+        ->assertJsonPath('data.owner_id', $user->id);
+});
+
 it('adds a note to a customer', function () {
     [$user, $tenant, $token] = registerUser('note@example.test', 'Note Org');
     $customer = $tenant->run(fn () => Customer::factory()->create());

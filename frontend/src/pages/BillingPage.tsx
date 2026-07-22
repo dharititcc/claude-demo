@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
-import { cn } from '@/lib/utils'
+import { cn, safeHttpUrl } from '@/lib/utils'
 import type { BillingInterval, Plan, UsageMetric } from '@/types'
 
 function money(minorUnits: number, currency: string): string {
@@ -330,7 +330,7 @@ export default function BillingPage() {
                         {invoice.tax && ` (incl. ${invoice.tax} tax)`}
                       </p>
                     </div>
-                    <a href={invoice.download_url} target="_blank" rel="noreferrer">
+                    <a href={safeHttpUrl(invoice.download_url)} target="_blank" rel="noreferrer">
                       <Button variant="ghost" size="sm">
                         <Download size={14} /> PDF
                         <ExternalLink size={12} className="opacity-60" />

@@ -26,6 +26,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Behind a load balancer the app sees the proxy's IP and http scheme
+        // unless it trusts the X-Forwarded-* headers. Trusting them is what lets
+        // URL::forceScheme('https') and SESSION_SECURE_COOKIE actually take
+        // effect (the request must look https for a secure cookie to be sent).
+        $middleware->trustProxies(at: '*', headers: Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_HOST | Request::HEADER_X_FORWARDED_PORT | Request::HEADER_X_FORWARDED_PROTO);
+
         $middleware->alias([
             'tenant' => InitializeTenancyForUser::class,
             'active' => EnsureUserIsActive::class,

@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Laravel\Cashier\Cashier;
@@ -31,6 +32,7 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->configureHttps();
         $this->configurePasswordPolicy();
         $this->configureAuthorization();
         $this->configureModels();
@@ -130,6 +132,19 @@ class AppServiceProvider extends ServiceProvider
             // it falls through instead of denying outright.
             return $user->checkPermissionTo($ability) ?: null;
         });
+    }
+
+    /**
+     * Force every generated URL to https in production. Behind a load balancer
+     * this depends on the forwarded-proto header being trusted — see the
+     * trustProxies() call in bootstrap/app.php — otherwise redirects and signed
+     * URLs come back http and secure cookies never get set.
+     */
+    private function configureHttps(): void
+    {
+        if ($this->app->isProduction()) {
+            URL::forceScheme('https');
+        }
     }
 
     private function configureModels(): void

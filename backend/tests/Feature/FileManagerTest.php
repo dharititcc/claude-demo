@@ -195,6 +195,62 @@ it('requires the password on a protected share', function () {
         ->assertOk();
 });
 
+it('enforces the download cap and counts each download exactly once', function () {
+    [, $tenant, $token] = registerUser('cap@example.test', 'Cap Org');
+
+    $file = $tenant->run(fn () => File::create([
+        'name' => 'capped.pdf',
+        'disk' => 'public',
+        'path' => UploadedFile::fake()->create('capped.pdf', 10)->store('files', 'public'),
+        'size' => 10,
+    ]));
+
+    $share = $this->withHeaders(orgHeaders($token, $tenant))
+        ->postJson("/api/v1/files/{$file->id}/share", ['max_downloads' => 1])
+        ->assertCreated();
+
+    $plain = str($share->json('data.url'))->afterLast('/')->toString();
+
+    // First download succeeds and claims the single slot exactly once.
+    $this->post("/api/v1/public/shares/{$tenant->slug}/{$plain}/download", [], ['Accept' => 'application/json'])
+        ->assertOk();
+
+    $tenant->run(fn () => expect(FileShare::first()->download_count)->toBe(1));
+
+    // Second download is refused now the cap is spent — and does not increment again.
+    $this->post("/api/v1/public/shares/{$tenant->slug}/{$plain}/download", [], ['Accept' => 'application/json'])
+        ->assertStatus(422);
+
+    $tenant->run(fn () => expect(FileShare::first()->download_count)->toBe(1));
+});
+
+it('locks out repeated wrong-password guesses on a share', function () {
+    [, $tenant, $token] = registerUser('brute@example.test', 'Brute Org');
+
+    $file = $tenant->run(fn () => File::create([
+        'name' => 'locked.pdf',
+        'disk' => 'public',
+        'path' => UploadedFile::fake()->create('locked.pdf', 10)->store('files', 'public'),
+        'size' => 10,
+    ]));
+
+    $share = $this->withHeaders(orgHeaders($token, $tenant))
+        ->postJson("/api/v1/files/{$file->id}/share", ['password' => 'letmein'])
+        ->assertCreated();
+
+    $plain = str($share->json('data.url'))->afterLast('/')->toString();
+
+    // Five wrong guesses are each rejected as a bad password (422)...
+    foreach (range(1, 5) as $ignored) {
+        $this->post("/api/v1/public/shares/{$tenant->slug}/{$plain}/download", ['password' => 'wrong'], ['Accept' => 'application/json'])
+            ->assertStatus(422);
+    }
+
+    // ...the sixth is locked out (429) even though the password is now correct.
+    $this->post("/api/v1/public/shares/{$tenant->slug}/{$plain}/download", ['password' => 'letmein'], ['Accept' => 'application/json'])
+        ->assertStatus(429);
+});
+
 it('forbids a viewer from sharing', function () {
     [$user, $tenant, $token] = registerUser('noshare@example.test', 'NoShare Org');
     $file = $tenant->run(fn () => File::create(['name' => 'x.pdf', 'disk' => 'public', 'path' => 'files/x.pdf', 'size' => 1]));

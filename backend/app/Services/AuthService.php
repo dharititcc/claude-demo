@@ -34,6 +34,10 @@ class AuthService
     /** Wrong codes allowed against one challenge before it is torn up. */
     private const MAX_CHALLENGE_ATTEMPTS = 5;
 
+    /** A valid bcrypt hash compared against when no user matches, so login timing
+     *  does not reveal whether an email is registered. */
+    private const DUMMY_PASSWORD_HASH = '$2y$12$WQH4kOzfn5lLr5FyvRhIY.VCl3kVYL3o/3Vv8QMmc5uqtj//jl8FK';
+
     public function __construct(private readonly OrganizationService $organizations) {}
 
     /**
@@ -83,6 +87,12 @@ class AuthService
         }
 
         $user = User::where('email', $email)->first();
+
+        if ($user === null) {
+            // No matching user still pays the bcrypt cost, so login latency does
+            // not reveal whether the email is registered (user enumeration).
+            Hash::check($password, self::DUMMY_PASSWORD_HASH);
+        }
 
         if ($user === null || ! Hash::check($password, $user->password)) {
             RateLimiter::hit($key, self::DECAY_SECONDS);

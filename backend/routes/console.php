@@ -18,3 +18,8 @@ Schedule::command('app:refresh-org-stats')
     ->hourly()
     ->withoutOverlapping()
     ->onOneServer();
+
+// Sanctum tokens carry an expiration (config/sanctum.php); expired rows are
+// dead weight once past it. Prune the ones expired more than a day ago so the
+// personal_access_tokens table doesn't grow without bound.
+Schedule::command('sanctum:prune-expired --hours=24')->daily();

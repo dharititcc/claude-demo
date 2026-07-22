@@ -23,6 +23,8 @@ class UpdateCustomerRequest extends FormRequest
      */
     public function rules(): array
     {
+        $central = config('tenancy.database.central_connection');
+
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'email' => ['nullable', 'email:rfc', 'max:255'],
@@ -39,7 +41,11 @@ class UpdateCustomerRequest extends FormRequest
             'country' => ['nullable', 'string', 'size:2'],
 
             'lifetime_value' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
-            'owner_id' => ['nullable', 'integer', 'exists:'.config('tenancy.database.central_connection').'.users,id'],
+
+            // Owner must be a member of this organization: membership is enforced
+            // against the central pivot, so a user id from another tenant — which
+            // merely exists in the central users table — is rejected.
+            'owner_id' => ['nullable', 'integer', Rule::exists("{$central}.organization_user", 'user_id')->where('tenant_id', tenant()->id)],
 
             'tags' => ['sometimes', 'array', 'max:20'],
             'tags.*' => ['string', 'max:50'],

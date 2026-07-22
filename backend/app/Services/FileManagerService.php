@@ -8,7 +8,9 @@ use App\Models\File;
 use App\Models\FileShare;
 use App\Models\Folder;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -106,9 +108,30 @@ class FileManagerService
         return $share;
     }
 
-    public function recordDownload(FileShare $share): void
+    /**
+     * Atomically claim one download slot against the share's cap.
+     *
+     * The cap check (isValid()) and the counter increment used to be two separate
+     * statements, so N concurrent downloads could all pass the check before any
+     * increment landed and blow straight past max_downloads. This collapses the
+     * claim into a single conditional UPDATE — it increments only while still
+     * under the cap, and the affected-row count says whether we actually got a
+     * slot. Call it *before* streaming the bytes.
+     *
+     * @throws ValidationException
+     */
+    public function claimDownload(FileShare $share): void
     {
-        $share->increment('download_count');
+        $claimed = FileShare::whereKey($share->getKey())
+            ->where(fn (Builder $q) => $q->whereNull('max_downloads')
+                ->orWhereColumn('download_count', '<', 'max_downloads'))
+            ->update(['download_count' => DB::raw('download_count + 1')]);
+
+        if ($claimed === 0) {
+            throw ValidationException::withMessages([
+                'token' => __('This share link is invalid, expired, or has reached its download limit.'),
+            ]);
+        }
     }
 
     /**

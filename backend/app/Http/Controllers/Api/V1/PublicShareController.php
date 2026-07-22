@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\FileShare;
 use App\Models\Tenant;
 use App\Services\FileManagerService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use OpenApi\Attributes as OA;
@@ -25,6 +27,12 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class PublicShareController extends Controller
 {
+    /** Wrong share-password attempts allowed per share+IP before a temporary lockout. */
+    private const MAX_PASSWORD_ATTEMPTS = 5;
+
+    /** Lockout duration after too many wrong share passwords, in seconds. */
+    private const PASSWORD_LOCKOUT_SECONDS = 900; // 15 minutes
+
     public function __construct(private readonly FileManagerService $files) {}
 
     /**
@@ -73,21 +81,57 @@ class PublicShareController extends Controller
             $share = $this->files->resolveShare($token);
 
             if ($share->requiresPassword()) {
+                $this->assertPasswordAttemptsRemain($share, $request);
+
                 $password = (string) $request->input('password');
 
                 if (! Hash::check($password, (string) $share->password_hash)) {
+                    // A public share password can be weak; the 30/min IP throttle
+                    // alone leaves thousands of guesses per share per hour. Bound
+                    // it to a handful of tries per share+IP before locking out.
+                    RateLimiter::hit($this->passwordAttemptKey($share, $request), self::PASSWORD_LOCKOUT_SECONDS);
+
                     throw ValidationException::withMessages([
                         'password' => __('Incorrect password for this share.'),
                     ]);
                 }
+
+                RateLimiter::clear($this->passwordAttemptKey($share, $request));
             }
 
-            $this->files->recordDownload($share);
+            // Claim a download slot atomically *before* streaming, so concurrent
+            // requests cannot all slip past the cap (isValid() only reads it).
+            $this->files->claimDownload($share);
 
             $file = $share->file;
 
             return Storage::disk($file->disk)->download($file->path, $file->name);
         });
+    }
+
+    /**
+     * Refuse further password attempts once a share+IP has burned through its
+     * budget, so a weak share password cannot be brute-forced within the wider
+     * IP throttle.
+     *
+     * @throws ValidationException
+     */
+    private function assertPasswordAttemptsRemain(FileShare $share, Request $request): void
+    {
+        $key = $this->passwordAttemptKey($share, $request);
+
+        if (RateLimiter::tooManyAttempts($key, self::MAX_PASSWORD_ATTEMPTS)) {
+            throw ValidationException::withMessages([
+                'password' => __('Too many incorrect password attempts. Try again in :seconds seconds.', [
+                    'seconds' => RateLimiter::availableIn($key),
+                ]),
+            ])->status(429);
+        }
+    }
+
+    private function passwordAttemptKey(FileShare $share, Request $request): string
+    {
+        return "share-pw:{$share->id}:{$request->ip()}";
     }
 
     /**
