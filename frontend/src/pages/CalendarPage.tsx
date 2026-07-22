@@ -1,13 +1,15 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { ChevronLeft, ChevronRight, ListTodo } from 'lucide-react'
 import { api } from '@/services/api'
 import { useAuthStore } from '@/store/auth'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import { cn } from '@/lib/utils'
-import type { EventOccurrence } from '@/types'
+import { bucketByDay } from '@/lib/calendar'
+import type { EventOccurrence, Task } from '@/types'
 import { usePageTitle } from '@/hooks/usePageTitle'
 
 /** Local YYYY-MM-DD, avoiding the UTC shift `toISOString()` would introduce. */
@@ -37,6 +39,7 @@ export default function CalendarPage() {
 
   const [cursor, setCursor] = useState(() => new Date())
   const orgSlug = useAuthStore((s) => s.activeOrgSlug)
+  const can = useAuthStore((s) => s.can)
 
   const year = cursor.getFullYear()
   const month = cursor.getMonth()
@@ -56,17 +59,34 @@ export default function CalendarPage() {
     enabled: Boolean(orgSlug),
   })
 
-  // Bucket occurrences by day for O(1) lookup while rendering the grid.
-  const byDay = useMemo(() => {
-    const map = new Map<string, EventOccurrence[]>()
-    for (const occ of events.data ?? []) {
-      const key = occ.starts_at.slice(0, 10)
-      const list = map.get(key) ?? []
-      list.push(occ)
-      map.set(key, list)
-    }
-    return map
-  }, [events.data])
+  // Task deadlines share the grid with events. Separate endpoint and separate
+  // permission, so a member who cannot see tasks still gets a working calendar
+  // rather than a failed page. Subtasks are included (roots_only=0): a subtask
+  // with its own deadline is still a deadline, and the duplicate-nesting reason
+  // for hiding them does not apply to a date grid.
+  const tasks = useQuery({
+    queryKey: ['calendar-tasks', orgSlug, from, to],
+    queryFn: async () => {
+      const { data } = await api.get<{ data: Task[] }>('/v1/tasks', {
+        params: {
+          due_after: from,
+          due_before: to,
+          roots_only: 0,
+          sort: 'due_on',
+          direction: 'asc',
+          per_page: 100,
+        },
+      })
+      return data.data
+    },
+    enabled: Boolean(orgSlug) && can('tasks.view'),
+  })
+
+  // Bucket events and task deadlines by day for O(1) lookup while rendering.
+  const byDay = useMemo(
+    () => bucketByDay(events.data ?? [], tasks.data ?? []),
+    [events.data, tasks.data],
+  )
 
   const today = ymd(new Date())
 
@@ -98,7 +118,7 @@ export default function CalendarPage() {
           ))}
         </div>
 
-        {events.isLoading ? (
+        {events.isLoading || tasks.isLoading ? (
           <div className="flex h-96 items-center justify-center">
             <Spinner className="h-6 w-6" />
           </div>
@@ -107,7 +127,7 @@ export default function CalendarPage() {
             {grid.map((day) => {
               const key = ymd(day)
               const inMonth = day.getMonth() === month
-              const dayEvents = byDay.get(key) ?? []
+              const dayItems = byDay.get(key) ?? []
 
               return (
                 <div
@@ -127,27 +147,49 @@ export default function CalendarPage() {
                   </div>
 
                   <div className="space-y-1">
-                    {dayEvents.slice(0, 3).map((occ, i) => (
-                      <div
-                        key={`${occ.event_id}-${i}`}
-                        title={occ.title}
-                        className="truncate rounded px-1 py-0.5 text-[11px] font-medium"
-                        style={{ background: `${occ.color}22`, color: occ.color }}
-                      >
-                        {!occ.all_day && (
-                          <span className="tabular-nums opacity-70">
-                            {new Date(occ.starts_at).toLocaleTimeString(undefined, {
-                              hour: 'numeric',
-                              minute: '2-digit',
-                            })}{' '}
-                          </span>
-                        )}
-                        {occ.title}
-                      </div>
-                    ))}
-                    {dayEvents.length > 3 && (
+                    {dayItems.slice(0, 3).map((item, i) =>
+                      item.kind === 'event' ? (
+                        <div
+                          key={`event-${item.occurrence.event_id}-${i}`}
+                          title={item.occurrence.title}
+                          className="truncate rounded px-1 py-0.5 text-[11px] font-medium"
+                          style={{
+                            background: `${item.occurrence.color}22`,
+                            color: item.occurrence.color,
+                          }}
+                        >
+                          {!item.occurrence.all_day && (
+                            <span className="tabular-nums opacity-70">
+                              {new Date(item.occurrence.starts_at).toLocaleTimeString(undefined, {
+                                hour: 'numeric',
+                                minute: '2-digit',
+                              })}{' '}
+                            </span>
+                          )}
+                          {item.occurrence.title}
+                        </div>
+                      ) : (
+                        <Link
+                          key={`task-${item.task.id}`}
+                          to="/tasks"
+                          title={`Task due: ${item.task.title}`}
+                          className={cn(
+                            'flex items-center gap-1 truncate rounded border-l-2 bg-muted/60 px-1 py-0.5 text-[11px] font-medium hover:bg-muted',
+                            item.task.status === 'done'
+                              ? 'border-l-muted-foreground/40 text-muted-foreground line-through'
+                              : item.task.is_overdue
+                                ? 'border-l-destructive text-destructive'
+                                : 'border-l-primary text-foreground',
+                          )}
+                        >
+                          <ListTodo size={10} className="shrink-0 opacity-70" />
+                          <span className="truncate">{item.task.title}</span>
+                        </Link>
+                      ),
+                    )}
+                    {dayItems.length > 3 && (
                       <div className="px-1 text-[10px] text-muted-foreground">
-                        +{dayEvents.length - 3} more
+                        +{dayItems.length - 3} more
                       </div>
                     )}
                   </div>
