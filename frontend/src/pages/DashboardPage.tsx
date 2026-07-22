@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Spinner } from '@/components/ui/Spinner'
 import { formatDate } from '@/lib/date'
 import type { DashboardStats } from '@/types'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 const STATUS_COLORS: Record<string, string> = {
   active: '#10b981',
@@ -56,6 +57,8 @@ function StatCard({
 }
 
 export default function DashboardPage() {
+  usePageTitle('Dashboard')
+
   const orgSlug = useAuthStore((s) => s.activeOrgSlug)
   const user = useAuthStore((s) => s.user)
 

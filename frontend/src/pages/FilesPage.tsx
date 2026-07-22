@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import type { UsageMetric } from '@/types'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 interface FolderRow {
   id: number
@@ -38,6 +39,8 @@ function formatBytes(bytes: number): string {
 }
 
 export default function FilesPage() {
+  usePageTitle('Files')
+
   const [folderId, setFolderId] = useState<number | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
   const orgSlug = useAuthStore((s) => s.activeOrgSlug)

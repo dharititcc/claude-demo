@@ -16,6 +16,7 @@ import { OrgProfileCard } from '@/components/admin/OrgProfileCard'
 import { LimitsCard } from '@/components/admin/LimitsCard'
 import { formatDate, formatDateTime, metric } from '@/lib/adminFormat'
 import type { AdminOrganization } from '@/types/admin'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -37,6 +38,8 @@ export default function AdminOrganizationDetailPage() {
   const remove = useDeleteOrganization()
   const restore = useRestoreOrganization()
   const impersonate = useImpersonate()
+
+  usePageTitle(org ? `${org.name} · Admin` : 'Admin')
 
   if (isLoading) {
     return (

@@ -10,6 +10,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { KanbanColumn } from '@/components/tasks/KanbanColumn'
 import { TaskFormDialog } from '@/components/tasks/TaskFormDialog'
 import type { Task, TaskStatus } from '@/types'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 const COLUMN_LABELS: Record<TaskStatus, string> = {
   todo: 'To do',
@@ -19,6 +20,8 @@ const COLUMN_LABELS: Record<TaskStatus, string> = {
 }
 
 export default function TasksPage() {
+  usePageTitle('Tasks')
+
   const [editing, setEditing] = useState<Task | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dragging, setDragging] = useState<Task | null>(null)

@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import { formatDate } from '@/lib/date'
 import type { Project, ProjectStatus } from '@/types'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 const statusVariant: Record<ProjectStatus, 'success' | 'default' | 'warning' | 'danger' | 'muted'> = {
   active: 'success',
@@ -33,6 +34,8 @@ const createSchema = z.object({
 type CreateValues = z.infer<typeof createSchema>
 
 export default function ProjectsPage() {
+  usePageTitle('Projects')
+
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<string>('')
   const [creating, setCreating] = useState(false)

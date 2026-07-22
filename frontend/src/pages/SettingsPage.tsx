@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import TwoFactorSettings from '@/components/auth/TwoFactorSettings'
 import { formatDate } from '@/lib/date'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 const schema = z.object({
   name: z.string().min(1, 'Name is required.').max(255),
@@ -44,6 +45,8 @@ const TIMEZONES = [
 const CURRENCIES = ['USD', 'EUR', 'GBP', 'INR', 'AUD', 'CAD', 'JPY', 'SGD']
 
 export default function SettingsPage() {
+  usePageTitle('Settings')
+
   const [logo, setLogo] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)

@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Spinner } from '@/components/ui/Spinner'
 import { formatDate } from '@/lib/date'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 /**
  * Landing page for an emailed invitation link.
@@ -21,6 +22,8 @@ import { formatDate } from '@/lib/date'
  * authenticated as the invited address.
  */
 export default function AcceptInvitationPage() {
+  usePageTitle('Accept invitation')
+
   const { token = '' } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()

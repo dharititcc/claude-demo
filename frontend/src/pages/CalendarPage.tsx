@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import { cn } from '@/lib/utils'
 import type { EventOccurrence } from '@/types'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 /** Local YYYY-MM-DD, avoiding the UTC shift `toISOString()` would introduce. */
 function ymd(date: Date): string {
@@ -32,6 +33,8 @@ function monthGrid(year: number, month: number): Date[] {
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 export default function CalendarPage() {
+  usePageTitle('Calendar')
+
   const [cursor, setCursor] = useState(() => new Date())
   const orgSlug = useAuthStore((s) => s.activeOrgSlug)
 

@@ -14,6 +14,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { CustomerFormDialog } from '@/components/customers/CustomerFormDialog'
 import { formatDate } from '@/lib/date'
 import type { Customer, CustomerFilters, CustomerStatus } from '@/types'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 const STATUSES: Array<CustomerStatus | ''> = ['', 'lead', 'active', 'inactive', 'churned']
 
@@ -25,6 +26,8 @@ const statusVariant: Record<CustomerStatus, 'success' | 'default' | 'warning' | 
 }
 
 export default function CustomersPage() {
+  usePageTitle('Customers')
+
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<string>('')
   const [page, setPage] = useState(1)

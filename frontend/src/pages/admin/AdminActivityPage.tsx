@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Spinner } from '@/components/ui/Spinner'
 import { useAdminActivity } from '@/hooks/useAdmin'
 import { formatDateTime } from '@/lib/adminFormat'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 /** Human labels for the dotted action verbs the API records. */
 const ACTION_LABELS: Record<string, string> = {
@@ -32,6 +33,8 @@ function actionVariant(action: string): 'default' | 'success' | 'warning' | 'dan
 }
 
 export default function AdminActivityPage() {
+  usePageTitle('Activity · Admin')
+
   const [page, setPage] = useState(1)
   const { data, isLoading, isFetching, isError } = useAdminActivity({ page, per_page: 30 })
 

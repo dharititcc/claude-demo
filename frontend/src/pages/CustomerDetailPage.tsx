@@ -25,6 +25,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { safeHttpUrl } from '@/lib/utils'
 import { formatDateTime } from '@/lib/date'
 import type { CustomerStatus } from '@/types'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 const statusVariant: Record<CustomerStatus, 'success' | 'default' | 'warning' | 'danger'> = {
   active: 'success',
@@ -51,6 +52,8 @@ export default function CustomerDetailPage() {
   const orgSlug = useAuthStore((s) => s.activeOrgSlug)
 
   const { data: customer, isLoading, isError } = useCustomer(customerId)
+
+  usePageTitle(customer?.name)
 
   const refresh = () =>
     queryClient.invalidateQueries({ queryKey: customerKeys(orgSlug).detail(customerId) })

@@ -12,6 +12,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { cn, safeHttpUrl } from '@/lib/utils'
 import { formatDate } from '@/lib/date'
 import type { BillingInterval, Plan, UsageMetric } from '@/types'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 function money(minorUnits: number, currency: string): string {
   return (minorUnits / 100).toLocaleString(undefined, {
@@ -55,6 +56,8 @@ function UsageBar({ label, metric }: { label: string; metric: UsageMetric }) {
 }
 
 export default function BillingPage() {
+  usePageTitle('Billing')
+
   const [interval, setInterval] = useState<BillingInterval>('monthly')
   const orgSlug = useAuthStore((s) => s.activeOrgSlug)
   const can = useAuthStore((s) => s.can)

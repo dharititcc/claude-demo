@@ -11,6 +11,7 @@ import { OrgStatusBadge } from '@/components/admin/OrgStatusBadge'
 import { formatDate, metric } from '@/lib/adminFormat'
 import type { AdminOrgFilters } from '@/types/admin'
 import type { OrganizationStatus } from '@/types'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 const STATUS_OPTIONS: Array<{ value: OrganizationStatus | ''; label: string }> = [
   { value: '', label: 'All statuses' },
@@ -24,6 +25,8 @@ const selectClass =
   'h-10 rounded-md border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
 
 export default function AdminOrganizationsPage() {
+  usePageTitle('Organizations · Admin')
+
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<OrganizationStatus | ''>('')
   const [trashed, setTrashed] = useState<'' | 'with' | 'only'>('')

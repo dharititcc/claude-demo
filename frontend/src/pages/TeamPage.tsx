@@ -15,6 +15,7 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import { formatDate } from '@/lib/date'
 import type { Role } from '@/types'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 const ROLES: Role[] = ['owner', 'admin', 'manager', 'employee', 'viewer']
 
@@ -26,6 +27,8 @@ const inviteSchema = z.object({
 type InviteValues = z.infer<typeof inviteSchema>
 
 export default function TeamPage() {
+  usePageTitle('Team')
+
   const [inviting, setInviting] = useState(false)
   const queryClient = useQueryClient()
   const can = useAuthStore((s) => s.can)

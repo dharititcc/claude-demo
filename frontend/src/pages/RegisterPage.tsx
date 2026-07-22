@@ -6,6 +6,7 @@ import { Building2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { useRegister } from '@/hooks/useAuth'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 /**
  * Mirrors the server's password policy (App\Providers\AppServiceProvider) so the
@@ -34,6 +35,8 @@ const schema = z
 type FormValues = z.infer<typeof schema>
 
 export default function RegisterPage() {
+  usePageTitle('Create account')
+
   const registerMutation = useRegister()
   const {
     register,

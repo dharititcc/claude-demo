@@ -13,6 +13,7 @@ import { Card, CardContent } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import { useAdminStats } from '@/hooks/useAdmin'
 import { metric } from '@/lib/adminFormat'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 interface StatCardProps {
   label: string
@@ -39,6 +40,8 @@ function StatCard({ label, value, icon: Icon, hint }: StatCardProps) {
 }
 
 export default function AdminDashboardPage() {
+  usePageTitle('Admin')
+
   const { data: stats, isLoading, isError } = useAdminStats()
 
   if (isLoading) {

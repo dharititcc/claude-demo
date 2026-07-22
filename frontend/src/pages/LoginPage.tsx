@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { useLogin } from '@/hooks/useAuth'
 import TwoFactorChallengeForm from '@/components/auth/TwoFactorChallengeForm'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 const schema = z.object({
   email: z.string().min(1, 'Email is required.').email('Enter a valid email address.'),
@@ -17,6 +18,8 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 export default function LoginPage() {
+  usePageTitle('Sign in')
+
   // Set when the password was right but the account owes a second factor.
   const [challengeToken, setChallengeToken] = useState<string | null>(null)
   const login = useLogin(setChallengeToken)
