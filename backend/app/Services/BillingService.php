@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Models\Plan;
 use App\Models\Tenant;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Laravel\Cashier\Exceptions\IncompletePayment;
 use Laravel\Cashier\Subscription;
@@ -230,8 +231,38 @@ class BillingService
                 'payment' => __('This payment needs confirmation. Complete the authentication and try again.'),
             ]);
         } catch (ApiErrorException $e) {
+            $this->logStripeFailure($e);
+
             throw ValidationException::withMessages([$field => $this->readable($e)]);
         }
+    }
+
+    /**
+     * Record what Stripe actually said before it is flattened into a 422.
+     *
+     * Without this a billing failure leaves no trace at all: the customer sees
+     * Stripe's sentence, the response is a 422 (which Laravel does not log), and
+     * the code, type and request id — the only things that identify the failure
+     * in Stripe's own logs — are discarded. Diagnosing a failed payment then
+     * depends on the customer quoting the message back accurately.
+     *
+     * The card itself is never logged; Stripe's error object carries no PAN, and
+     * only these identifying fields are taken from it.
+     */
+    private function logStripeFailure(ApiErrorException $e): void
+    {
+        $error = $e->getError();
+
+        Log::warning('Stripe rejected a billing call.', [
+            'code' => $e->getStripeCode(),
+            'type' => $error->type ?? null,
+            'decline_code' => $error->decline_code ?? null,
+            'param' => $error->param ?? null,
+            'message' => $error->message ?? $e->getMessage(),
+            // Quote this to Stripe support; it identifies the exact request.
+            'request_id' => $e->getRequestId(),
+            'http_status' => $e->getHttpStatus(),
+        ]);
     }
 
     /**
