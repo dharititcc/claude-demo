@@ -2235,6 +2235,277 @@
                 ]
             }
         },
+        "/api/v1/customers/{customer}/contacts": {
+            "get": {
+                "tags": [
+                    "Customers"
+                ],
+                "summary": "Contacts at a customer",
+                "description": "Primary contact first, then alphabetical. Searchable across name, email, job title and department. Not paginated: a company has tens of contacts, not thousands, and the detail screen shows them all.",
+                "operationId": "04ae1b3c281870bd946af82c0a0e1795",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/OrganizationHeader"
+                    },
+                    {
+                        "name": "customer",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Search name, email, job title, department",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "active",
+                                "inactive"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Contacts"
+                    },
+                    "403": {
+                        "description": "Lacks customers.view"
+                    },
+                    "404": {
+                        "description": "Not in this organization"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Customers"
+                ],
+                "summary": "Add a contact",
+                "description": "The first contact of a customer becomes primary automatically — a company with one contact and no primary is not a state worth allowing. Marking a contact primary demotes whoever held it, in one transaction.",
+                "operationId": "a641529fa48b4bf17a305eb23b39c59e",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/OrganizationHeader"
+                    },
+                    {
+                        "name": "customer",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "first_name"
+                                ],
+                                "properties": {
+                                    "first_name": {
+                                        "type": "string"
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "nullable": true
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "mobile": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "department": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "job_title": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "active",
+                                            "inactive"
+                                        ]
+                                    },
+                                    "is_primary": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    },
+                    "403": {
+                        "description": "Lacks customers.update"
+                    },
+                    "422": {
+                        "description": "Validation failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/customers/{customer}/contacts/{contact}": {
+            "put": {
+                "tags": [
+                    "Customers"
+                ],
+                "summary": "Edit a contact",
+                "description": "Partial edit. Setting is_primary true promotes this contact and demotes the previous one; setting it false hands primary to the next contact rather than leaving the customer with none.",
+                "operationId": "68c7349a6e6a3165d847fddf632899d6",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/OrganizationHeader"
+                    },
+                    {
+                        "name": "customer",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "contact",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated"
+                    },
+                    "403": {
+                        "description": "Lacks customers.update"
+                    },
+                    "404": {
+                        "description": "Contact does not belong to this customer"
+                    },
+                    "422": {
+                        "description": "Validation failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Customers"
+                ],
+                "summary": "Remove a contact",
+                "description": "Soft delete — a contact removed by mistake is a person whose history is worth recovering. Removing the primary hands primary to the next contact.",
+                "operationId": "d23959470434e922688e6836c2d751a3",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/OrganizationHeader"
+                    },
+                    {
+                        "name": "customer",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "contact",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted"
+                    },
+                    "403": {
+                        "description": "Lacks customers.update"
+                    },
+                    "404": {
+                        "description": "Contact does not belong to this customer"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/customers": {
             "get": {
                 "tags": [
@@ -2278,8 +2549,10 @@
                             "type": "string",
                             "enum": [
                                 "name",
+                                "customer_number",
                                 "email",
                                 "company",
+                                "industry",
                                 "status",
                                 "lifetime_value",
                                 "created_at",
@@ -3674,6 +3947,498 @@
                     },
                     "422": {
                         "description": "Invalid token, or issued to a different address"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/invoices": {
+            "get": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "List invoices",
+                "description": "Across all customers, or one via customer_id. `status=overdue` filters on the derived state — unpaid and past due — in SQL rather than in PHP, so pagination stays correct.",
+                "operationId": "bc7d90facaef99e1846d581b3a3b6efa",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/OrganizationHeader"
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Search invoice number or notes",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "draft",
+                                "sent",
+                                "paid",
+                                "void",
+                                "overdue"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "customer_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "due_after",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "due_before",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated invoices"
+                    },
+                    "403": {
+                        "description": "Lacks invoices.view"
+                    },
+                    "422": {
+                        "description": "Validation failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/invoices/{invoice}": {
+            "get": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "One invoice with its lines",
+                "operationId": "e4fea93d387cc4c1293ced38945196ac",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/OrganizationHeader"
+                    },
+                    {
+                        "name": "invoice",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The invoice"
+                    },
+                    "403": {
+                        "description": "Lacks invoices.view"
+                    },
+                    "404": {
+                        "description": "Not in this organization"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Edit an invoice",
+                "description": "Figures may only change while the invoice is a draft: once sent, the customer holds a copy, and restating the amounts would make our record disagree with theirs. Notes, terms and the due date stay editable.",
+                "operationId": "71535495315150f402bb39572f10d055",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/OrganizationHeader"
+                    },
+                    {
+                        "name": "invoice",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated"
+                    },
+                    "403": {
+                        "description": "Lacks invoices.update"
+                    },
+                    "422": {
+                        "description": "Issued invoice, or validation failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Delete a draft invoice",
+                "description": "Only a draft may be deleted, because it was never issued. Anything sent must be voided instead so its number survives.",
+                "operationId": "22a8e71d1371187f38d300097f4ebd42",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/OrganizationHeader"
+                    },
+                    {
+                        "name": "invoice",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted"
+                    },
+                    "403": {
+                        "description": "Lacks invoices.delete"
+                    },
+                    "422": {
+                        "description": "Not a draft",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/customers/{customer}/invoices": {
+            "post": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Raise an invoice for a customer",
+                "description": "Created as a draft. The number is issued by the server and the totals are computed from the lines in integer minor units — neither can be supplied by the client, or an invoice could be raised for any amount.",
+                "operationId": "981ec1f07e19d67005ccd2f4963bd80d",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/OrganizationHeader"
+                    },
+                    {
+                        "name": "customer",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "items"
+                                ],
+                                "properties": {
+                                    "issue_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "due_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "currency": {
+                                        "type": "string",
+                                        "example": "USD"
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "terms": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "description": {
+                                                    "type": "string"
+                                                },
+                                                "quantity": {
+                                                    "type": "number"
+                                                },
+                                                "unit_price": {
+                                                    "type": "number"
+                                                },
+                                                "tax_rate": {
+                                                    "description": "Percent",
+                                                    "type": "number"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Draft created"
+                    },
+                    "403": {
+                        "description": "Lacks invoices.create"
+                    },
+                    "422": {
+                        "description": "Validation failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/invoices/{invoice}/send": {
+            "post": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Issue a draft invoice",
+                "description": "Moves draft → sent and freezes the figures. An invoice with no lines is refused: sending an empty demand for payment is never intended.",
+                "operationId": "14e62a0b1c472a3f8e21e3131af47e64",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/OrganizationHeader"
+                    },
+                    {
+                        "name": "invoice",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sent"
+                    },
+                    "403": {
+                        "description": "Lacks invoices.update"
+                    },
+                    "422": {
+                        "description": "Not a draft, or has no lines",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/invoices/{invoice}/payments": {
+            "post": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Record a payment",
+                "description": "Part payments are accepted. The invoice only becomes paid once the balance reaches zero, and paid_at is stamped at that moment rather than on the first instalment. Paying more than the balance is refused.",
+                "operationId": "8aa617357e4c129511ed961bdbad63cb",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/OrganizationHeader"
+                    },
+                    {
+                        "name": "invoice",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "amount"
+                                ],
+                                "properties": {
+                                    "amount": {
+                                        "type": "number",
+                                        "format": "float"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Payment recorded"
+                    },
+                    "403": {
+                        "description": "Lacks invoices.update"
+                    },
+                    "422": {
+                        "description": "Void invoice, or more than the balance",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/invoices/{invoice}/void": {
+            "post": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Void an invoice",
+                "description": "Cancels an issued invoice while keeping its number. Deleting it would leave a gap in the sequence, which is exactly what an auditor asks about. A paid invoice cannot be voided.",
+                "operationId": "245231758ed2542881aa46fe1cda5284",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/OrganizationHeader"
+                    },
+                    {
+                        "name": "invoice",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Voided"
+                    },
+                    "403": {
+                        "description": "Lacks invoices.delete"
+                    },
+                    "422": {
+                        "description": "Already paid",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -5964,6 +6729,10 @@
         {
             "name": "Audit",
             "description": "The organization's audit trail"
+        },
+        {
+            "name": "Invoices",
+            "description": "Invoices"
         }
     ]
 }

@@ -53,6 +53,8 @@ enum Role: string
                 Permission::CustomersView, Permission::CustomersCreate,
                 Permission::CustomersUpdate, Permission::CustomersDelete,
                 Permission::CustomersImport, Permission::CustomersExport,
+                Permission::InvoicesView, Permission::InvoicesCreate,
+                Permission::InvoicesUpdate, Permission::InvoicesDelete,
                 Permission::ProjectsView, Permission::ProjectsCreate,
                 Permission::ProjectsUpdate, Permission::ProjectsDelete,
                 Permission::TasksView, Permission::TasksCreate,
@@ -68,6 +70,10 @@ enum Role: string
             self::Employee => [
                 Permission::CustomersView, Permission::CustomersCreate,
                 Permission::CustomersUpdate, Permission::CustomersExport,
+                // Can raise and amend an invoice, but not delete or void one —
+                // destroying a financial record is a manager's decision.
+                Permission::InvoicesView, Permission::InvoicesCreate,
+                Permission::InvoicesUpdate,
                 Permission::ProjectsView, Permission::ProjectsCreate,
                 Permission::ProjectsUpdate,
                 Permission::TasksView, Permission::TasksCreate,
@@ -80,6 +86,7 @@ enum Role: string
             // Strictly read-only.
             self::Viewer => [
                 Permission::CustomersView,
+                Permission::InvoicesView,
                 Permission::ProjectsView,
                 Permission::TasksView,
                 Permission::CalendarView,

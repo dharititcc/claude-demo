@@ -166,6 +166,19 @@ class Customer extends Model
     }
 
     /**
+     * Invoices issued to this customer.
+     *
+     * Nothing to do with the Billing module: those are Stripe invoices for what
+     * this organization owes us for the platform.
+     *
+     * @return HasMany<Invoice, $this>
+     */
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
+    /**
      * Work done for this customer.
      *
      * The projects.customer_id foreign key already existed; this is the inverse

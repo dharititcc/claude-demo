@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\V1\EventController;
 use App\Http\Controllers\Api\V1\FileController;
 use App\Http\Controllers\Api\V1\ImpersonationController;
 use App\Http\Controllers\Api\V1\InvitationController;
+use App\Http\Controllers\Api\V1\InvoiceController;
 use App\Http\Controllers\Api\V1\MemberController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\OrganizationController;
@@ -292,6 +293,26 @@ Route::prefix('v1')->group(function () {
             Route::post('customers/{id}/restore', [CustomerController::class, 'restore'])
                 ->whereNumber('id')
                 ->name('customers.restore');
+            // ─── Customer invoices ───
+            // The organization's own sales documents, governed by invoices.* —
+            // nothing to do with /billing, which is what this organization pays
+            // us for the platform.
+            Route::get('invoices', [InvoiceController::class, 'index'])->name('invoices.index');
+            Route::get('invoices/{invoice}', [InvoiceController::class, 'show'])
+                ->whereNumber('invoice')->name('invoices.show');
+            Route::post('customers/{customer}/invoices', [InvoiceController::class, 'store'])
+                ->whereNumber('customer')->name('customers.invoices.store');
+            Route::put('invoices/{invoice}', [InvoiceController::class, 'update'])
+                ->whereNumber('invoice')->name('invoices.update');
+            Route::post('invoices/{invoice}/send', [InvoiceController::class, 'send'])
+                ->whereNumber('invoice')->name('invoices.send');
+            Route::post('invoices/{invoice}/payments', [InvoiceController::class, 'recordPayment'])
+                ->whereNumber('invoice')->name('invoices.payments.store');
+            Route::post('invoices/{invoice}/void', [InvoiceController::class, 'void'])
+                ->whereNumber('invoice')->name('invoices.void');
+            Route::delete('invoices/{invoice}', [InvoiceController::class, 'destroy'])
+                ->whereNumber('invoice')->name('invoices.destroy');
+
             // ─── Customer contacts ───
             // Nested: a contact has no meaning outside its customer, and the
             // nesting is what scopes the lookup so one customer's contact id

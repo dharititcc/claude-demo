@@ -20,6 +20,19 @@ enum Permission: string
     case CustomersImport = 'customers.import';
     case CustomersExport = 'customers.export';
 
+    /**
+     * ─── Customer invoices ───
+     *
+     * Invoices the organization issues to its own customers. Separate from
+     * billing.*, which governs what the organization pays US for the platform —
+     * a bookkeeper may need to raise invoices without ever seeing the
+     * organization's own subscription.
+     */
+    case InvoicesView = 'invoices.view';
+    case InvoicesCreate = 'invoices.create';
+    case InvoicesUpdate = 'invoices.update';
+    case InvoicesDelete = 'invoices.delete';
+
     // ─── Projects ───
     case ProjectsView = 'projects.view';
     case ProjectsCreate = 'projects.create';
