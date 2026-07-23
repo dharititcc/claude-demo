@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
+import { SubscribeDialog } from '@/components/billing/SubscribeDialog'
 import { cn, safeHttpUrl } from '@/lib/utils'
 import { formatDate } from '@/lib/date'
 import type { BillingInterval, Plan, UsageMetric } from '@/types'
@@ -59,6 +60,8 @@ export default function BillingPage() {
   usePageTitle('Billing')
 
   const [interval, setInterval] = useState<BillingInterval>('monthly')
+  // Non-null while the card dialog is open for that plan.
+  const [subscribingTo, setSubscribingTo] = useState<Plan | null>(null)
   const orgSlug = useAuthStore((s) => s.activeOrgSlug)
   const can = useAuthStore((s) => s.can)
   const queryClient = useQueryClient()
@@ -299,7 +302,14 @@ export default function BillingPage() {
                     className="w-full"
                     variant={plan.monthly_amount === 0 ? 'outline' : 'primary'}
                     loading={swap.isPending}
-                    onClick={() => swap.mutate(plan)}
+                    /*
+                      Two different operations. Swapping moves an existing
+                      subscription and needs no card, because Stripe already has
+                      one. With no subscription there is nothing to swap — that
+                      path 422s with "subscribe first" — so the first one has to
+                      collect a card and create it.
+                    */
+                    onClick={() => (subscription.active ? swap.mutate(plan) : setSubscribingTo(plan))}
                   >
                     {subscription.active ? 'Switch to this plan' : 'Choose plan'}
                   </Button>
@@ -347,6 +357,16 @@ export default function BillingPage() {
           </CardContent>
         </Card>
       )}
+
+      <SubscribeDialog
+        open={subscribingTo !== null}
+        plan={subscribingTo}
+        interval={interval}
+        // The API preserves a running org trial instead of restarting it, so the
+        // dialog has to quote that date rather than the plan's trial length.
+        trialEndsAt={subscription.trial_ends_at}
+        onClose={() => setSubscribingTo(null)}
+      />
     </div>
   )
 }

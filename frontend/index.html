@@ -4,7 +4,16 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self' %VITE_API_URL%; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'" />
+    <!--
+      Stripe Elements needs three specific origins and no more: js.stripe.com
+      serves the script and hosts the card iframes, api.stripe.com receives the
+      card details. They are listed individually rather than loosening a
+      directive wholesale — card data going straight from the browser to Stripe
+      is exactly what keeps this app out of PCI scope, so the allowance is worth
+      making precisely. frame-src must be stated explicitly: it would otherwise
+      inherit default-src 'self' and block the card fields.
+    -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://js.stripe.com; frame-src https://js.stripe.com https://hooks.stripe.com; connect-src 'self' %VITE_API_URL% https://api.stripe.com; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'" />
     <!-- Fallback only: each page sets its own title on mount (see usePageTitle). -->
     <title>SaaS Platform</title>
   </head>
