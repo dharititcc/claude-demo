@@ -11,6 +11,8 @@ import { Spinner } from '@/components/ui/Spinner'
 // bundle carries only the shell and the auth screens the visitor actually needs.
 const LoginPage = lazy(() => import('@/pages/LoginPage'))
 const RegisterPage = lazy(() => import('@/pages/RegisterPage'))
+const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPasswordPage'))
+const ResetPasswordPage = lazy(() => import('@/pages/ResetPasswordPage'))
 const AcceptInvitationPage = lazy(() => import('@/pages/AcceptInvitationPage'))
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
 const CustomersPage = lazy(() => import('@/pages/CustomersPage'))
@@ -48,6 +50,8 @@ export default function App() {
             <Route element={<GuestRoute />}>
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
             </Route>
 
             {/*

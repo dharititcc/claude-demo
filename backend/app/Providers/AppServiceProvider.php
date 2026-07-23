@@ -11,6 +11,7 @@ use App\Models\SubscriptionItem;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\StripePriceCatalogue;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -37,6 +38,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureHttps();
         $this->configurePasswordPolicy();
+        $this->configurePasswordReset();
         $this->configureAuthorization();
         $this->configureModels();
         $this->configureRateLimiting();
@@ -87,6 +89,31 @@ class AppServiceProvider extends ServiceProvider
      * Organization-wide password policy. Production additionally checks the
      * password against the HaveIBeenPwned breach corpus.
      */
+    /**
+     * Point the reset email at the SPA, not at this API.
+     *
+     * Laravel's ResetPassword notification defaults to route('password.reset'),
+     * a *web* route this headless API does not have — so building the mail threw
+     * RouteNotFoundException and every reset request for a real address 500'd.
+     * The token is redeemed by the SPA, which posts it back to
+     * POST /auth/reset-password, so the link has to be a frontend URL.
+     *
+     * The email is carried alongside the token because the reset endpoint
+     * requires both, and asking someone to retype the address they just asked
+     * the link for is a needless way to fail.
+     */
+    private function configurePasswordReset(): void
+    {
+        ResetPassword::createUrlUsing(function (object $notifiable, string $token): string {
+            $query = http_build_query([
+                'token' => $token,
+                'email' => $notifiable->getEmailForPasswordReset(),
+            ]);
+
+            return rtrim((string) config('app.frontend_url'), '/')."/reset-password?{$query}";
+        });
+    }
+
     private function configurePasswordPolicy(): void
     {
         Password::defaults(function () {
