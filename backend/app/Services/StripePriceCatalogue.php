@@ -79,4 +79,38 @@ class StripePriceCatalogue
     {
         return $price->recurring?->interval;
     }
+
+    /**
+     * Every active recurring price in the account, product expanded.
+     *
+     * The product comes back expanded because the importer matches on it — one
+     * paginated call rather than a product lookup per price.
+     *
+     * @return array<int, Price>
+     *
+     * @throws RuntimeException when Stripe cannot be reached.
+     */
+    public function activeRecurringPrices(): array
+    {
+        try {
+            $prices = [];
+
+            $page = Cashier::stripe()->prices->all([
+                'active' => true,
+                'type' => 'recurring',
+                'limit' => 100,
+                'expand' => ['data.product'],
+            ]);
+
+            foreach ($page->autoPagingIterator() as $price) {
+                $prices[] = $price;
+                // Feed the memo, so a later retrieve() of the same id is free.
+                $this->memo[$price->id] = $price;
+            }
+
+            return $prices;
+        } catch (ApiErrorException $e) {
+            throw new RuntimeException($e->getMessage(), previous: $e);
+        }
+    }
 }
