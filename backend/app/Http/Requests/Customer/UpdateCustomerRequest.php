@@ -29,16 +29,33 @@ class UpdateCustomerRequest extends FormRequest
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'email' => ['nullable', 'email:rfc', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50'],
+            'mobile' => ['nullable', 'string', 'max:50'],
             'company' => ['nullable', 'string', 'max:255'],
+            'trading_name' => ['nullable', 'string', 'max:255'],
+            'tax_number' => ['nullable', 'string', 'max:64'],
+            'registration_number' => ['nullable', 'string', 'max:64'],
+            'industry' => ['nullable', 'string', 'max:100'],
             'website' => ['nullable', 'url', 'max:255'],
             'status' => ['sometimes', Rule::in(Customer::STATUSES)],
 
+            // Billing address.
             'address_line1' => ['nullable', 'string', 'max:255'],
             'address_line2' => ['nullable', 'string', 'max:255'],
             'city' => ['nullable', 'string', 'max:255'],
             'state' => ['nullable', 'string', 'max:255'],
             'postal_code' => ['nullable', 'string', 'max:20'],
             'country' => ['nullable', 'string', 'size:2'],
+
+            // Shipping address.
+            'shipping_address_line1' => ['nullable', 'string', 'max:255'],
+            'shipping_address_line2' => ['nullable', 'string', 'max:255'],
+            'shipping_city' => ['nullable', 'string', 'max:255'],
+            'shipping_state' => ['nullable', 'string', 'max:255'],
+            'shipping_postal_code' => ['nullable', 'string', 'max:20'],
+            'shipping_country' => ['nullable', 'string', 'size:2'],
+
+            'timezone' => ['nullable', 'string', 'timezone'],
+            'currency' => ['nullable', 'string', 'size:3'],
 
             'lifetime_value' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
 

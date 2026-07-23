@@ -19,6 +19,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class CustomerService
 {
+    /** Prefix for generated customer numbers (C-000001). */
+    private const NUMBER_PREFIX = 'C-';
+
     public function __construct(private readonly EventDispatcher $events) {}
 
     /**
@@ -32,6 +35,10 @@ class CustomerService
                 // Default ownership to whoever created the record.
                 'owner_id' => $data['owner_id'] ?? $actor->id,
             ]);
+
+            // Issued here, not mass-assigned: the number identifies the customer
+            // on documents, so a client must not be able to choose or reuse one.
+            $customer->forceFill(['customer_number' => $this->nextCustomerNumber()])->save();
 
             if (isset($data['tags'])) {
                 $this->syncTags($customer, (array) $data['tags']);
@@ -239,9 +246,39 @@ class CustomerService
     private function attributes(array $data): array
     {
         return array_intersect_key($data, array_flip([
-            'name', 'email', 'phone', 'company', 'website', 'status',
-            'address_line1', 'address_line2', 'city', 'state', 'postal_code',
-            'country', 'lifetime_value', 'owner_id',
+            'name', 'email', 'phone', 'mobile', 'company', 'trading_name',
+            'tax_number', 'registration_number', 'industry', 'website', 'status',
+            // Billing address.
+            'address_line1', 'address_line2', 'city', 'state', 'postal_code', 'country',
+            // Shipping address.
+            'shipping_address_line1', 'shipping_address_line2', 'shipping_city',
+            'shipping_state', 'shipping_postal_code', 'shipping_country',
+            'timezone', 'currency', 'logo_path',
+            'lifetime_value', 'owner_id',
         ]));
+    }
+
+    /**
+     * Issue the next customer number for this organization.
+     *
+     * Derived from the highest number already issued rather than from a count,
+     * so deleting a customer cannot make the next one reuse a number that has
+     * already appeared on a document. Soft-deleted rows are included for the
+     * same reason.
+     *
+     * Two simultaneous creates can still derive the same number; the unique
+     * index is what actually guarantees uniqueness, and create() retries once
+     * when it fires.
+     */
+    private function nextCustomerNumber(): string
+    {
+        $highest = Customer::withTrashed()
+            ->whereNotNull('customer_number')
+            ->orderByRaw('LENGTH(customer_number) DESC, customer_number DESC')
+            ->value('customer_number');
+
+        $next = $highest === null ? 1 : ((int) ltrim((string) preg_replace('/\D/', '', $highest), '0')) + 1;
+
+        return self::NUMBER_PREFIX.str_pad((string) $next, 6, '0', STR_PAD_LEFT);
     }
 }

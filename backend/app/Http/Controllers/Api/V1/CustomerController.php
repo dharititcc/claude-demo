@@ -129,7 +129,12 @@ class CustomerController extends Controller
     {
         $this->authorize('view', $customer);
 
-        $customer->load(['tags', 'notes', 'attachments']);
+        // Contacts are loaded in full on the detail screen (a company has tens,
+        // not thousands). Projects are counted rather than loaded: the tab
+        // fetches them itself, and loading every project of every customer here
+        // would be paid for on every open of this page.
+        $customer->load(['tags', 'notes', 'attachments', 'contacts' => fn ($q) => $q->ordered()])
+            ->loadCount(['contacts', 'projects']);
 
         return response()->json(['data' => new CustomerResource($customer)]);
     }

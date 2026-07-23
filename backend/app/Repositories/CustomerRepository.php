@@ -49,7 +49,12 @@ class CustomerRepository
         $query = Customer::query()
             // Eager load to keep the list view at a fixed query count; lazy
             // loading is disabled outside production and would throw here.
-            ->with('tags');
+            //
+            // Only the PRIMARY contact, not all of them: the list shows one name
+            // per row, and loading every contact of every customer would move
+            // far more rows for nothing.
+            ->with(['tags', 'primaryContact'])
+            ->withCount('contacts');
 
         $query->search($filters['q'] ?? null);
 
@@ -60,6 +65,12 @@ class CustomerRepository
 
         if (! empty($filters['owner_id'])) {
             $query->where('owner_id', $filters['owner_id']);
+        }
+
+        // Exact match, not a LIKE: industry is picked from a list, and the
+        // column is indexed for exactly this filter.
+        if (! empty($filters['industry'])) {
+            $query->where('industry', $filters['industry']);
         }
 
         if (! empty($filters['tag'])) {

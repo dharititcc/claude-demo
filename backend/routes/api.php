@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\V1\Auth\SessionController;
 use App\Http\Controllers\Api\V1\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Api\V1\Auth\TwoFactorController;
 use App\Http\Controllers\Api\V1\BillingController;
+use App\Http\Controllers\Api\V1\CustomerContactController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\EventController;
@@ -291,6 +292,19 @@ Route::prefix('v1')->group(function () {
             Route::post('customers/{id}/restore', [CustomerController::class, 'restore'])
                 ->whereNumber('id')
                 ->name('customers.restore');
+            // ─── Customer contacts ───
+            // Nested: a contact has no meaning outside its customer, and the
+            // nesting is what scopes the lookup so one customer's contact id
+            // cannot be read through another customer's path.
+            Route::get('customers/{customer}/contacts', [CustomerContactController::class, 'index'])
+                ->whereNumber('customer')->name('customers.contacts.index');
+            Route::post('customers/{customer}/contacts', [CustomerContactController::class, 'store'])
+                ->whereNumber('customer')->name('customers.contacts.store');
+            Route::put('customers/{customer}/contacts/{contact}', [CustomerContactController::class, 'update'])
+                ->whereNumber(['customer', 'contact'])->name('customers.contacts.update');
+            Route::delete('customers/{customer}/contacts/{contact}', [CustomerContactController::class, 'destroy'])
+                ->whereNumber(['customer', 'contact'])->name('customers.contacts.destroy');
+
             Route::post('customers/{customer}/notes', [CustomerController::class, 'addNote'])
                 ->whereNumber('customer')
                 ->name('customers.notes.store');

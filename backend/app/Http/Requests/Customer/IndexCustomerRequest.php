@@ -30,6 +30,7 @@ class IndexCustomerRequest extends FormRequest
             'status' => ['nullable'],
             'status.*' => [Rule::in(Customer::STATUSES)],
             'owner_id' => ['nullable', 'integer'],
+            'industry' => ['nullable', 'string', 'max:100'],
             'tag' => ['nullable', 'string', 'max:50'],
             'created_after' => ['nullable', 'date'],
             'created_before' => ['nullable', 'date', 'after_or_equal:created_after'],
