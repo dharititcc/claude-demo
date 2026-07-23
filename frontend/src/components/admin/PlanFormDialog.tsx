@@ -1,10 +1,11 @@
 import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { Toggle } from '@/components/ui/Toggle'
 import { useCreatePlan, useUpdatePlan } from '@/hooks/useAdmin'
 import type { AdminPlan, AdminPlanPayload } from '@/types/admin'
 
@@ -97,6 +98,7 @@ export function PlanFormDialog({
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
@@ -325,7 +327,7 @@ export function PlanFormDialog({
             />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="p-trial" className="mb-1.5 block text-sm font-medium">
                 Trial days
@@ -338,13 +340,28 @@ export function PlanFormDialog({
               </label>
               <Input id="p-sort" placeholder={plan ? '' : 'last'} error={errors.sort_order?.message} {...register('sort_order')} />
             </div>
-            <div className="flex items-end">
-              <label className="flex items-center gap-2 text-sm font-medium">
-                <input type="checkbox" className="h-4 w-4 rounded border" {...register('is_active')} />
-                Active
-              </label>
-            </div>
           </div>
+
+          {/*
+            On its own row rather than squeezed beside the number fields: this is
+            the only control here that decides whether customers can buy the
+            plan, and it needs the explanation more than the alignment.
+          */}
+          <Controller
+            name="is_active"
+            control={control}
+            render={({ field }) => (
+              <Toggle
+                id="p-active"
+                label="Active"
+                description="Inactive plans are hidden from the pricing page and cannot be subscribed to. Existing subscribers keep their limits."
+                checked={field.value}
+                onChange={(e) => field.onChange(e.target.checked)}
+                onBlur={field.onBlur}
+                ref={field.ref}
+              />
+            )}
+          />
 
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={onClose} disabled={pending}>
