@@ -3,6 +3,7 @@ import type {
   Customer,
   CustomerContact,
   CustomerContactPayload,
+  CustomerDocument,
   CustomerFilters,
   CustomerPayload,
   Paginated,
@@ -121,5 +122,50 @@ export const customerService = {
 
   async deleteContact(customerId: number, contactId: number): Promise<void> {
     await api.delete(`/v1/customers/${customerId}/contacts/${contactId}`)
+  },
+
+  // ─── Documents ───
+  // A seam over the Files module: download, share and delete still use the
+  // existing /files/{file} routes.
+
+  async documents(customerId: number, category?: string): Promise<CustomerDocument[]> {
+    const { data } = await api.get<{ data: CustomerDocument[] }>(
+      `/v1/customers/${customerId}/documents`,
+      { params: category ? { category } : {} },
+    )
+    return data.data
+  },
+
+  async uploadDocument(customerId: number, file: File, category?: string): Promise<CustomerDocument> {
+    const form = new FormData()
+    form.append('file', file)
+    if (category) form.append('category', category)
+
+    const { data } = await api.post<{ data: CustomerDocument }>(
+      `/v1/customers/${customerId}/documents`,
+      form,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
+    )
+    return data.data
+  },
+
+  /** Uploads a new version; the previous one is kept as history. */
+  async replaceDocument(customerId: number, documentId: number, file: File): Promise<CustomerDocument> {
+    const form = new FormData()
+    form.append('file', file)
+
+    const { data } = await api.post<{ data: CustomerDocument }>(
+      `/v1/customers/${customerId}/documents/${documentId}/replace`,
+      form,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
+    )
+    return data.data
+  },
+
+  async documentVersions(customerId: number, documentId: number): Promise<CustomerDocument[]> {
+    const { data } = await api.get<{ data: CustomerDocument[] }>(
+      `/v1/customers/${customerId}/documents/${documentId}/versions`,
+    )
+    return data.data
   },
 }

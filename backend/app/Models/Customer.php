@@ -141,6 +141,53 @@ class Customer extends Model
     /** Columns the API permits sorting by (allow-list, not user input). */
     public const SORTABLE = ['name', 'customer_number', 'email', 'company', 'industry', 'status', 'lifetime_value', 'created_at', 'updated_at'];
 
+    /** Prefix for generated customer numbers (C-000001). */
+    private const NUMBER_PREFIX = 'C-';
+
+    /**
+     * Issue a customer number on creation, whatever created the row.
+     *
+     * Deliberately here rather than in CustomerService: the CSV import, the
+     * seeders and any future path all call Customer::create() directly, and a
+     * customer without a number is a customer that cannot be quoted on a
+     * document. Putting it in one service method meant "has a number" depended
+     * on which code path you happened to use — the import had already lost it.
+     *
+     * Still not mass assignable: an explicitly supplied number is honoured only
+     * because migrations and tests set it deliberately, never because a client
+     * posted one — `customer_number` is absent from $fillable.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (Customer $customer) {
+            if (blank($customer->customer_number)) {
+                $customer->customer_number = self::nextNumber();
+            }
+        });
+    }
+
+    /**
+     * The next number for this organization.
+     *
+     * Derived from the highest already issued — including soft-deleted rows —
+     * so deleting a customer cannot make the next one reuse a number that has
+     * already appeared somewhere. Concurrent creates can still derive the same
+     * value; the unique index is what actually guarantees uniqueness.
+     */
+    private static function nextNumber(): string
+    {
+        $highest = self::withTrashed()
+            ->whereNotNull('customer_number')
+            ->orderByRaw('LENGTH(customer_number) DESC, customer_number DESC')
+            ->value('customer_number');
+
+        $next = $highest === null
+            ? 1
+            : ((int) ltrim((string) preg_replace('/\D/', '', $highest), '0')) + 1;
+
+        return self::NUMBER_PREFIX.str_pad((string) $next, 6, '0', STR_PAD_LEFT);
+    }
+
     /**
      * People at this company.
      *
@@ -176,6 +223,19 @@ class Customer extends Model
     public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);
+    }
+
+    /**
+     * File-manager documents filed against this customer.
+     *
+     * The same `files` table the Files module uses — not a separate store — so
+     * downloading, sharing and quota accounting all keep working unchanged.
+     *
+     * @return HasMany<File, $this>
+     */
+    public function documents(): HasMany
+    {
+        return $this->hasMany(File::class);
     }
 
     /**

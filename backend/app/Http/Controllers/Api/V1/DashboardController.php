@@ -7,10 +7,12 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CustomerResource;
 use App\Models\Customer;
+use App\Models\Invoice;
 use App\Repositories\CustomerRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use OpenApi\Attributes as OA;
 
 /**
@@ -54,8 +56,12 @@ class DashboardController extends Controller
                     // Lifetime value of customers currently marked active.
                     'lifetime_value' => (float) Customer::where('status', 'active')->sum('lifetime_value'),
                     'currency' => tenant()->currency,
+                    // What has actually been invoiced and collected, which is a
+                    // harder number than lifetime_value — that one is typed in.
+                    ...$this->invoiceTotals(),
                 ],
                 'growth' => $this->growthSeries(),
+                'top_customers' => $this->topCustomers(),
             ];
         });
 
@@ -73,6 +79,66 @@ class DashboardController extends Controller
                 'recent_customers' => CustomerResource::collection($recent),
             ],
         ]);
+    }
+
+    /**
+     * Invoiced, collected and outstanding.
+     *
+     * Aggregated in SQL rather than by loading invoices: this runs on every
+     * dashboard open, and the figures are sums, not rows.
+     *
+     * Void invoices are excluded everywhere — a cancelled document is not
+     * revenue, and counting it would overstate both billed and outstanding.
+     *
+     * @return array<string, float|int>
+     */
+    private function invoiceTotals(): array
+    {
+        $issued = Invoice::whereNot('status', 'void');
+
+        return [
+            'invoiced_total' => (float) (clone $issued)->sum('total'),
+            'collected_total' => (float) (clone $issued)->sum('amount_paid'),
+            // Outstanding is billed minus collected on non-void invoices, which
+            // is the same as the sum of their balances.
+            'outstanding_total' => (float) (clone $issued)->sum(DB::raw('total - amount_paid')),
+            // Overdue is derived from the clock, so it is expressed as a query
+            // rather than read from a stored status (see Invoice::scopeOverdue).
+            'overdue_total' => (float) Invoice::overdue()->sum(DB::raw('total - amount_paid')),
+            'overdue_count' => Invoice::overdue()->count(),
+        ];
+    }
+
+    /**
+     * The customers worth the most, by what they have actually been invoiced.
+     *
+     * Ranked on invoiced value rather than lifetime_value: the latter is a
+     * hand-entered field, so a customer can top the list without ever having
+     * been billed. Void invoices are excluded for the same reason as above.
+     *
+     * @return array<int, array{id: int, name: string, customer_number: string|null, invoiced: float}>
+     */
+    private function topCustomers(): array
+    {
+        return Customer::query()
+            // The total comes back from the same grouped query. Summing per row
+            // afterwards would be five extra round trips for five rows.
+            ->selectRaw('customers.id, customers.name, customers.customer_number, SUM(invoices.total) as invoiced')
+            ->join('invoices', 'invoices.customer_id', '=', 'customers.id')
+            ->whereNot('invoices.status', 'void')
+            // Soft-deleted invoices are drafts somebody discarded.
+            ->whereNull('invoices.deleted_at')
+            ->groupBy('customers.id', 'customers.name', 'customers.customer_number')
+            ->orderByDesc('invoiced')
+            ->limit(5)
+            ->get()
+            ->map(fn (Customer $c) => [
+                'id' => (int) $c->id,
+                'name' => $c->name,
+                'customer_number' => $c->customer_number,
+                'invoiced' => (float) $c->getAttribute('invoiced'),
+            ])
+            ->all();
     }
 
     /**

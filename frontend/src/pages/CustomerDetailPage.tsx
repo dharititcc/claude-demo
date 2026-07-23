@@ -27,10 +27,11 @@ import { formatDateTime } from '@/lib/date'
 import { ContactsTab } from '@/components/customers/ContactsTab'
 import { ProjectsTab } from '@/components/customers/ProjectsTab'
 import { InvoicesTab } from '@/components/customers/InvoicesTab'
+import { DocumentsTab } from '@/components/customers/DocumentsTab'
 import type { Customer, CustomerStatus } from '@/types'
 import { usePageTitle } from '@/hooks/usePageTitle'
 
-type Tab = 'overview' | 'contacts' | 'projects' | 'invoices'
+type Tab = 'overview' | 'contacts' | 'projects' | 'invoices' | 'documents'
 
 /**
  * Counts come from the customer payload the page already loaded, so the tab bar
@@ -41,6 +42,7 @@ const TABS: Array<{ value: Tab; label: string; count?: (c: Customer) => number |
   { value: 'contacts', label: 'Contacts', count: (c) => c.contacts_count },
   { value: 'projects', label: 'Projects', count: (c) => c.projects_count },
   { value: 'invoices', label: 'Invoices' },
+  { value: 'documents', label: 'Documents' },
 ]
 
 const statusVariant: Record<CustomerStatus, 'success' | 'default' | 'warning' | 'danger'> = {
@@ -201,6 +203,7 @@ export default function CustomerDetailPage() {
       {tab === 'invoices' && (
         <InvoicesTab customerId={customer.id} currency={customer.currency ?? 'USD'} />
       )}
+      {tab === 'documents' && <DocumentsTab customerId={customer.id} />}
 
       <div className={cn('grid gap-6 lg:grid-cols-3', tab !== 'overview' && 'hidden')}>
         <Card className="lg:col-span-1">

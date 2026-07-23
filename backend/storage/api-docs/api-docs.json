@@ -3111,6 +3111,250 @@
                 ]
             }
         },
+        "/api/v1/customers/{customer}/documents": {
+            "get": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "A customer's documents",
+                "description": "Current versions only by default — superseded files are reached through the history endpoint. Filterable by category.",
+                "operationId": "8fdb827027d8ae61b10b7a358560e635",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/OrganizationHeader"
+                    },
+                    {
+                        "name": "customer",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "contract",
+                                "invoice",
+                                "proposal",
+                                "report",
+                                "identity",
+                                "other"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Documents, newest first"
+                    },
+                    "403": {
+                        "description": "Lacks files.view"
+                    },
+                    "404": {
+                        "description": "Not in this organization"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Upload a document for a customer",
+                "description": "Goes through the file manager, so the extension deny-list, the storage quota and the tenant-suffixed disk all apply. The stored name is random — the original is kept only for display.",
+                "operationId": "2d14571d94c4ecbd401339a56725d9db",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/OrganizationHeader"
+                    },
+                    {
+                        "name": "customer",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "file"
+                                ],
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "category": {
+                                        "type": "string",
+                                        "enum": [
+                                            "contract",
+                                            "invoice",
+                                            "proposal",
+                                            "report",
+                                            "identity",
+                                            "other"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Uploaded"
+                    },
+                    "402": {
+                        "description": "Storage quota reached"
+                    },
+                    "403": {
+                        "description": "Lacks files.upload"
+                    },
+                    "422": {
+                        "description": "Blocked file type, or validation failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/customers/{customer}/documents/{document}/replace": {
+            "post": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Upload a new version of a document",
+                "description": "The previous version is kept, not deleted — it becomes history, and the new file records which one it supersedes. Category and customer are inherited so a replacement cannot quietly re-file the document.",
+                "operationId": "2337f36cbbd8e75510a4d3e77eb492f6",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/OrganizationHeader"
+                    },
+                    {
+                        "name": "customer",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "file"
+                                ],
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "New version stored"
+                    },
+                    "403": {
+                        "description": "Lacks files.upload"
+                    },
+                    "404": {
+                        "description": "Document does not belong to this customer"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/customers/{customer}/documents/{document}/versions": {
+            "get": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Every version of a document",
+                "description": "The whole chain, newest first, regardless of which version was asked for. Superseded versions remain downloadable through the usual file route.",
+                "operationId": "90674f39f97888ffca3f03115dcb79b0",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/OrganizationHeader"
+                    },
+                    {
+                        "name": "customer",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Version history"
+                    },
+                    "403": {
+                        "description": "Lacks files.view"
+                    },
+                    "404": {
+                        "description": "Document does not belong to this customer"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/dashboard": {
             "get": {
                 "tags": [

@@ -669,3 +669,24 @@ export interface Paginated<T> {
     next: string | null
   }
 }
+
+/** Categories a customer document may be filed under. */
+export type DocumentCategory = 'contract' | 'invoice' | 'proposal' | 'report' | 'identity' | 'other'
+
+export interface CustomerDocument {
+  id: number
+  customer_id: number | null
+  name: string
+  category: DocumentCategory | null
+  mime_type: string | null
+  size: number
+  version: number
+  replaces_id: number | null
+  /** Derived from the version chain — nothing supersedes this row. */
+  is_current: boolean
+  /** Allow-listed types only; anything else is downloaded, never rendered. */
+  is_previewable: boolean
+  created_by: number | null
+  created_at: string | null
+  deleted_at: string | null
+}

@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\V1\Auth\TwoFactorController;
 use App\Http\Controllers\Api\V1\BillingController;
 use App\Http\Controllers\Api\V1\CustomerContactController;
 use App\Http\Controllers\Api\V1\CustomerController;
+use App\Http\Controllers\Api\V1\CustomerDocumentController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\EventController;
 use App\Http\Controllers\Api\V1\FileController;
@@ -312,6 +313,18 @@ Route::prefix('v1')->group(function () {
                 ->whereNumber('invoice')->name('invoices.void');
             Route::delete('invoices/{invoice}', [InvoiceController::class, 'destroy'])
                 ->whereNumber('invoice')->name('invoices.destroy');
+
+            // ─── Customer documents ───
+            // A seam over the Files module: downloading, sharing and deleting
+            // still use /files/{file}, which already authorizes and streams.
+            Route::get('customers/{customer}/documents', [CustomerDocumentController::class, 'index'])
+                ->whereNumber('customer')->name('customers.documents.index');
+            Route::post('customers/{customer}/documents', [CustomerDocumentController::class, 'store'])
+                ->whereNumber('customer')->name('customers.documents.store');
+            Route::post('customers/{customer}/documents/{document}/replace', [CustomerDocumentController::class, 'replace'])
+                ->whereNumber(['customer', 'document'])->name('customers.documents.replace');
+            Route::get('customers/{customer}/documents/{document}/versions', [CustomerDocumentController::class, 'versions'])
+                ->whereNumber(['customer', 'document'])->name('customers.documents.versions');
 
             // ─── Customer contacts ───
             // Nested: a contact has no meaning outside its customer, and the

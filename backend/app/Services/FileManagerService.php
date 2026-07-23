@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\Customer;
 use App\Models\File;
 use App\Models\FileShare;
 use App\Models\Folder;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -56,6 +58,87 @@ class FileManagerService
             'size' => $upload->getSize(),
             'created_by' => $actor->id,
         ]);
+    }
+
+    /**
+     * File a document against a customer.
+     *
+     * Delegates to upload() so the extension block-list, the storage quota, the
+     * random storage name and the tenant-suffixed disk all still apply — none of
+     * that is re-implemented here.
+     */
+    public function uploadForCustomer(UploadedFile $upload, Customer $customer, ?string $category, User $actor): File
+    {
+        $file = $this->upload($upload, null, $actor);
+
+        $file->forceFill([
+            'customer_id' => $customer->getKey(),
+            'category' => $category,
+        ])->save();
+
+        return $file->refresh();
+    }
+
+    /**
+     * Supersede a document with a newer version.
+     *
+     * The old row is kept and left in place: it is the history. The new file
+     * points at it through replaces_id, which is what makes the old one stop
+     * being "current" — see File::scopeCurrent(). Nothing is deleted, so a
+     * replacement can always be traced back.
+     *
+     * Category and customer are inherited rather than re-supplied: a replacement
+     * that quietly re-filed a document somewhere else would be a surprise.
+     */
+    public function replace(File $original, UploadedFile $upload, User $actor): File
+    {
+        return DB::transaction(function () use ($original, $upload, $actor) {
+            $replacement = $this->upload($upload, $original->folder_id, $actor);
+
+            $replacement->forceFill([
+                'customer_id' => $original->customer_id,
+                'category' => $original->category,
+                'version' => $original->version + 1,
+                'replaces_id' => $original->getKey(),
+            ])->save();
+
+            return $replacement->refresh();
+        });
+    }
+
+    /**
+     * Every version of a document, newest first.
+     *
+     * Walks the chain from whichever version was asked for, so the history is
+     * the same regardless of which link the caller holds.
+     *
+     * @return Collection<int, File>
+     */
+    public function versionHistory(File $file): Collection
+    {
+        // Walk back to the original.
+        $root = $file;
+
+        while ($root->replaces_id !== null) {
+            $previous = File::withTrashed()->find($root->replaces_id);
+
+            if ($previous === null) {
+                break;
+            }
+
+            $root = $previous;
+        }
+
+        // Then forward, collecting every version in the chain.
+        $chain = collect([$root]);
+        $cursor = $root;
+
+        while (($next = File::withTrashed()->where('replaces_id', $cursor->getKey())->first()) !== null) {
+            $chain->push($next);
+            $cursor = $next;
+        }
+
+        return $chain->sortByDesc('version')->values();
     }
 
     public function createFolder(string $name, ?int $parentId, User $actor): Folder
