@@ -1,5 +1,12 @@
 import { api } from './api'
-import type { Customer, CustomerFilters, CustomerPayload, Paginated } from '@/types'
+import type {
+  Customer,
+  CustomerContact,
+  CustomerContactPayload,
+  CustomerFilters,
+  CustomerPayload,
+  Paginated,
+} from '@/types'
 
 /**
  * Customers API. The active organization is applied by the request
@@ -78,5 +85,41 @@ export const customerService = {
     })
 
     return data.data
+  },
+
+  // ─── Contacts ───
+  // Nested under the customer: the server scopes the lookup to it, so a contact
+  // id from another customer cannot be reached through this path.
+
+  async contacts(customerId: number, params: { q?: string; status?: string } = {}): Promise<CustomerContact[]> {
+    const { data } = await api.get<{ data: CustomerContact[] }>(
+      `/v1/customers/${customerId}/contacts`,
+      { params: Object.fromEntries(Object.entries(params).filter(([, v]) => v)) },
+    )
+    return data.data
+  },
+
+  async createContact(customerId: number, payload: CustomerContactPayload): Promise<CustomerContact> {
+    const { data } = await api.post<{ data: CustomerContact }>(
+      `/v1/customers/${customerId}/contacts`,
+      payload,
+    )
+    return data.data
+  },
+
+  async updateContact(
+    customerId: number,
+    contactId: number,
+    payload: CustomerContactPayload,
+  ): Promise<CustomerContact> {
+    const { data } = await api.put<{ data: CustomerContact }>(
+      `/v1/customers/${customerId}/contacts/${contactId}`,
+      payload,
+    )
+    return data.data
+  },
+
+  async deleteContact(customerId: number, contactId: number): Promise<void> {
+    await api.delete(`/v1/customers/${customerId}/contacts/${contactId}`)
   },
 }

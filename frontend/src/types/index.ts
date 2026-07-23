@@ -182,40 +182,193 @@ export interface CustomerAddress {
 
 export interface Customer {
   id: number
+  /** Issued by the server (C-000001); never sent by the client. */
+  customer_number: string | null
   name: string
   email: string | null
   phone: string | null
+  mobile: string | null
   company: string | null
+  trading_name: string | null
+  tax_number: string | null
+  registration_number: string | null
+  industry: string | null
   website: string | null
   status: CustomerStatus
+  /** The billing address — the original address_* columns. */
   address: CustomerAddress
+  shipping_address: CustomerAddress
+  timezone: string | null
+  currency: string | null
+  logo_path: string | null
   lifetime_value: number
   owner_id: number | null
   tags?: Tag[]
   notes?: Note[]
   attachments?: Attachment[]
+  /** Loaded in full on the detail screen only. */
+  contacts?: CustomerContact[]
+  /** The list screen loads just this one, not every contact. */
+  primary_contact?: CustomerContact | null
   notes_count?: number
+  contacts_count?: number
+  projects_count?: number
   deleted_at: string | null
   created_at: string | null
   updated_at: string | null
 }
 
+export type ContactStatus = 'active' | 'inactive'
+
+export interface CustomerContact {
+  id: number
+  customer_id: number
+  first_name: string
+  last_name: string | null
+  /** Composed server-side so every screen renders a name identically. */
+  full_name: string
+  email: string | null
+  phone: string | null
+  mobile: string | null
+  department: string | null
+  job_title: string | null
+  notes: string | null
+  is_primary: boolean
+  status: ContactStatus
+  created_at: string | null
+  updated_at: string | null
+}
+
+/** Absent key = leave unchanged. `is_primary` is intent; the server decides. */
+export type CustomerContactPayload = Partial<{
+  first_name: string
+  last_name: string | null
+  email: string | null
+  phone: string | null
+  mobile: string | null
+  department: string | null
+  job_title: string | null
+  notes: string | null
+  status: ContactStatus
+  is_primary: boolean
+}>
+
 export interface CustomerPayload {
   name: string
   email?: string | null
   phone?: string | null
+  mobile?: string | null
   company?: string | null
+  trading_name?: string | null
+  tax_number?: string | null
+  registration_number?: string | null
+  industry?: string | null
   website?: string | null
   status?: CustomerStatus
   lifetime_value?: number | null
   tags?: string[]
+
+  // Billing address.
+  address_line1?: string | null
+  address_line2?: string | null
+  city?: string | null
+  state?: string | null
+  postal_code?: string | null
+  country?: string | null
+
+  // Shipping address.
+  shipping_address_line1?: string | null
+  shipping_address_line2?: string | null
+  shipping_city?: string | null
+  shipping_state?: string | null
+  shipping_postal_code?: string | null
+  shipping_country?: string | null
+
+  timezone?: string | null
+  currency?: string | null
 }
 
 /** Query parameters accepted by the customers list endpoint. */
 export interface CustomerFilters {
   q?: string
   status?: string
+  industry?: string
   tag?: string
+  sort?: string
+  direction?: 'asc' | 'desc'
+  page?: number
+  per_page?: number
+}
+
+// ─── Customer invoices ───
+// The organization's own sales documents. Nothing to do with BillingOverview,
+// which is what the organization pays us for the platform.
+
+/** What is stored. `display_status` additionally carries the derived states. */
+export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'void'
+export type InvoiceDisplayStatus = InvoiceStatus | 'overdue' | 'partial'
+
+export interface InvoiceItem {
+  id: number
+  description: string
+  quantity: number
+  unit_price: number
+  tax_rate: number
+  /** Stored server-side: the figure the customer was actually shown. */
+  line_total: number
+  position: number
+}
+
+export interface Invoice {
+  id: number
+  customer_id: number
+  number: string
+  status: InvoiceStatus
+  /** Folds in overdue/partial, which are derived rather than stored. */
+  display_status: InvoiceDisplayStatus
+  is_overdue: boolean
+  /** Only a draft may have its figures changed. */
+  is_editable: boolean
+  issue_date: string
+  due_date: string
+  paid_at: string | null
+  currency: string
+  subtotal: number
+  tax_total: number
+  total: number
+  amount_paid: number
+  balance: number
+  notes: string | null
+  terms: string | null
+  items?: InvoiceItem[]
+  customer?: Pick<Customer, 'id' | 'name' | 'customer_number'>
+  created_at: string | null
+  updated_at: string | null
+}
+
+export interface InvoiceItemPayload {
+  description: string
+  quantity: number
+  unit_price: number
+  tax_rate?: number
+}
+
+/** Note what is absent: number, status and totals are all server-owned. */
+export interface InvoicePayload {
+  issue_date?: string
+  due_date?: string
+  currency?: string
+  notes?: string | null
+  terms?: string | null
+  items?: InvoiceItemPayload[]
+}
+
+export interface InvoiceFilters {
+  q?: string
+  status?: InvoiceDisplayStatus
+  customer_id?: number
+  due_after?: string
+  due_before?: string
   sort?: string
   direction?: 'asc' | 'desc'
   page?: number
@@ -443,7 +596,13 @@ export interface Usage {
   storage_mb: UsageMetric
 }
 
-export interface Invoice {
+/**
+ * A Stripe invoice for the organization's own SaaS subscription.
+ *
+ * Named for its source to keep it apart from `Invoice`, which is an invoice the
+ * organization issues to one of ITS customers. Different party, different money.
+ */
+export interface StripeInvoice {
   id: string
   number: string | null
   date: string

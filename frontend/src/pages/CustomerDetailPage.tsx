@@ -22,10 +22,26 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
-import { safeHttpUrl } from '@/lib/utils'
+import { cn, safeHttpUrl } from '@/lib/utils'
 import { formatDateTime } from '@/lib/date'
-import type { CustomerStatus } from '@/types'
+import { ContactsTab } from '@/components/customers/ContactsTab'
+import { ProjectsTab } from '@/components/customers/ProjectsTab'
+import { InvoicesTab } from '@/components/customers/InvoicesTab'
+import type { Customer, CustomerStatus } from '@/types'
 import { usePageTitle } from '@/hooks/usePageTitle'
+
+type Tab = 'overview' | 'contacts' | 'projects' | 'invoices'
+
+/**
+ * Counts come from the customer payload the page already loaded, so the tab bar
+ * costs no extra requests. A tab whose count is unknown simply shows none.
+ */
+const TABS: Array<{ value: Tab; label: string; count?: (c: Customer) => number | undefined }> = [
+  { value: 'overview', label: 'Overview' },
+  { value: 'contacts', label: 'Contacts', count: (c) => c.contacts_count },
+  { value: 'projects', label: 'Projects', count: (c) => c.projects_count },
+  { value: 'invoices', label: 'Invoices' },
+]
 
 const statusVariant: Record<CustomerStatus, 'success' | 'default' | 'warning' | 'danger'> = {
   active: 'success',
@@ -47,6 +63,7 @@ export default function CustomerDetailPage() {
   const queryClient = useQueryClient()
   const fileInput = useRef<HTMLInputElement>(null)
   const [note, setNote] = useState('')
+  const [tab, setTab] = useState<Tab>('overview')
 
   const can = useAuthStore((s) => s.can)
   const orgSlug = useAuthStore((s) => s.activeOrgSlug)
@@ -151,7 +168,41 @@ export default function CustomerDetailPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      {/*
+        Tabs rather than one long page: contacts, projects and invoices are each
+        a working list in their own right, and stacking them would bury the
+        details. Overview keeps exactly what this page showed before.
+      */}
+      <div className="flex gap-1 overflow-x-auto border-b" role="tablist" aria-label="Customer sections">
+        {TABS.map((t) => (
+          <button
+            key={t.value}
+            type="button"
+            role="tab"
+            aria-selected={tab === t.value}
+            onClick={() => setTab(t.value)}
+            className={cn(
+              '-mb-px whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium transition-colors',
+              tab === t.value
+                ? 'border-primary text-foreground'
+                : 'border-transparent text-muted-foreground hover:text-foreground',
+            )}
+          >
+            {t.label}
+            {t.count?.(customer) !== undefined && (
+              <span className="ml-1.5 text-xs text-muted-foreground">{t.count(customer)}</span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'contacts' && <ContactsTab customerId={customer.id} />}
+      {tab === 'projects' && <ProjectsTab customerId={customer.id} />}
+      {tab === 'invoices' && (
+        <InvoicesTab customerId={customer.id} currency={customer.currency ?? 'USD'} />
+      )}
+
+      <div className={cn('grid gap-6 lg:grid-cols-3', tab !== 'overview' && 'hidden')}>
         <Card className="lg:col-span-1">
           <CardHeader>
             <CardTitle>Details</CardTitle>

@@ -1,5 +1,5 @@
 import { api } from './api'
-import type { BillingInterval, BillingOverview, Invoice, Plan } from '@/types'
+import type { BillingInterval, BillingOverview, Plan, StripeInvoice } from '@/types'
 
 export const billingService = {
   async plans(): Promise<Plan[]> {
@@ -12,8 +12,8 @@ export const billingService = {
     return data.data
   },
 
-  async invoices(): Promise<Invoice[]> {
-    const { data } = await api.get<{ data: Invoice[] }>('/v1/billing/invoices')
+  async invoices(): Promise<StripeInvoice[]> {
+    const { data } = await api.get<{ data: StripeInvoice[] }>('/v1/billing/invoices')
     return data.data
   },
 

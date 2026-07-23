@@ -20,6 +20,9 @@ export const projectService = {
   async list(params: {
     q?: string
     status?: ProjectStatus | ''
+    // Already supported by the API; surfaced here for the customer detail tab,
+    // which lists a customer's projects without duplicating the Projects module.
+    customer_id?: number
     overdue?: boolean
     page?: number
     per_page?: number
