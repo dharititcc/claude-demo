@@ -12,7 +12,6 @@ use App\Repositories\CustomerRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use OpenApi\Attributes as OA;
 
 /**
@@ -94,18 +93,28 @@ class DashboardController extends Controller
      */
     private function invoiceTotals(): array
     {
-        $issued = Invoice::whereNot('status', 'void');
+        // One aggregate scan for the three headline figures rather than three
+        // clones of the same query. The SUM expressions are constant strings —
+        // no user input reaches them. COALESCE so an org with no invoices reads
+        // 0.0 rather than null.
+        $totals = Invoice::whereNot('status', 'void')
+            ->selectRaw('COALESCE(SUM(total), 0) as invoiced, COALESCE(SUM(amount_paid), 0) as collected, COALESCE(SUM(total - amount_paid), 0) as outstanding')
+            ->first();
+
+        // Overdue is derived from the clock, so it is expressed as a query
+        // rather than read from a stored status (see Invoice::scopeOverdue). Its
+        // sum and count come back together, again in one scan.
+        $overdue = Invoice::overdue()
+            ->selectRaw('COALESCE(SUM(total - amount_paid), 0) as owed, COUNT(*) as cnt')
+            ->first();
 
         return [
-            'invoiced_total' => (float) (clone $issued)->sum('total'),
-            'collected_total' => (float) (clone $issued)->sum('amount_paid'),
-            // Outstanding is billed minus collected on non-void invoices, which
-            // is the same as the sum of their balances.
-            'outstanding_total' => (float) (clone $issued)->sum(DB::raw('total - amount_paid')),
-            // Overdue is derived from the clock, so it is expressed as a query
-            // rather than read from a stored status (see Invoice::scopeOverdue).
-            'overdue_total' => (float) Invoice::overdue()->sum(DB::raw('total - amount_paid')),
-            'overdue_count' => Invoice::overdue()->count(),
+            'invoiced_total' => (float) ($totals->invoiced ?? 0),
+            'collected_total' => (float) ($totals->collected ?? 0),
+            // Billed minus collected on non-void invoices — the sum of balances.
+            'outstanding_total' => (float) ($totals->outstanding ?? 0),
+            'overdue_total' => (float) ($overdue->owed ?? 0),
+            'overdue_count' => (int) ($overdue->cnt ?? 0),
         ];
     }
 
