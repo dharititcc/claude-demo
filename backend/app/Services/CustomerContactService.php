@@ -30,9 +30,10 @@ class CustomerContactService
             // and applied deliberately below.
             $wantsPrimary = (bool) ($data['is_primary'] ?? false);
 
-            $contact = $customer->contacts()->create(
-                array_merge($this->attributes($data), ['created_by' => $actor->id]),
-            );
+            // created_by is not fillable either: it must come from the actor, so
+            // it is force-filled rather than mass assigned from the payload.
+            $contact = $customer->contacts()->make($this->attributes($data));
+            $contact->forceFill(['created_by' => $actor->id])->save();
 
             // The first contact is the primary one by default: a company with
             // exactly one contact and no primary is a pointless state to allow.

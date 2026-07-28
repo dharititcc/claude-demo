@@ -50,7 +50,14 @@ class CustomerContact extends Model
      */
     protected array $auditable = ['first_name', 'last_name', 'email', 'job_title', 'is_primary', 'status'];
 
-    /** @var list<string> */
+    /**
+     * `created_by` is deliberately absent: it records who added the contact and
+     * must come from the authenticated actor, never from the request. Set via
+     * forceFill in CustomerContactService, the same as Invoice.created_by — a
+     * client that could post it could attribute a contact to another user.
+     *
+     * @var list<string>
+     */
     protected $fillable = [
         'first_name',
         'last_name',
@@ -61,7 +68,6 @@ class CustomerContact extends Model
         'job_title',
         'notes',
         'status',
-        'created_by',
     ];
 
     /**
