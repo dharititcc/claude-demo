@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Models\Concerns\Auditable;
 use App\Models\Concerns\UsesTenantConnection;
+use App\Support\LikeSearch;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -193,9 +194,8 @@ class Invoice extends Model
             return $query;
         }
 
-        // Escape LIKE wildcards so a literal % or _ does not match everything.
-        $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\%', '\_'], $term);
-        $like = "%{$escaped}%";
+        // Wildcards escaped so a literal % or _ does not match everything.
+        $like = LikeSearch::contains($term);
 
         return $query->where(fn (Builder $q) => $q->where('number', 'like', $like)->orWhere('notes', 'like', $like));
     }

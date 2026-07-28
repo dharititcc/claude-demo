@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Models\Concerns\Auditable;
 use App\Models\Concerns\UsesTenantConnection;
+use App\Support\LikeSearch;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -124,9 +125,8 @@ class CustomerContact extends Model
             return $query;
         }
 
-        // Escape LIKE wildcards so a literal % or _ does not match everything.
-        $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\%', '\_'], $term);
-        $like = "%{$escaped}%";
+        // Wildcards escaped so a literal % or _ does not match everything.
+        $like = LikeSearch::contains($term);
 
         return $query->where(function (Builder $q) use ($like) {
             $q->where('first_name', 'like', $like)

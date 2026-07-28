@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\User;
+use App\Support\SequentialNumber;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -272,13 +273,7 @@ class InvoiceService
      */
     private function nextNumber(): string
     {
-        $highest = Invoice::withTrashed()
-            ->orderByRaw('LENGTH(number) DESC, number DESC')
-            ->value('number');
-
-        $next = $highest === null ? 1 : ((int) ltrim((string) preg_replace('/\D/', '', $highest), '0')) + 1;
-
-        return self::NUMBER_PREFIX.str_pad((string) $next, 6, '0', STR_PAD_LEFT);
+        return SequentialNumber::next(Invoice::withTrashed(), 'number', self::NUMBER_PREFIX);
     }
 
     private function toMinor(float $amount): int

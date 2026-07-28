@@ -6,6 +6,8 @@ namespace App\Models;
 
 use App\Models\Concerns\Auditable;
 use App\Models\Concerns\UsesTenantConnection;
+use App\Support\LikeSearch;
+use App\Support\SequentialNumber;
 use Database\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -169,23 +171,14 @@ class Customer extends Model
     /**
      * The next number for this organization.
      *
-     * Derived from the highest already issued — including soft-deleted rows —
-     * so deleting a customer cannot make the next one reuse a number that has
-     * already appeared somewhere. Concurrent creates can still derive the same
-     * value; the unique index is what actually guarantees uniqueness.
+     * Includes soft-deleted rows so deleting a customer cannot make the next one
+     * reuse a number that has already appeared somewhere. Concurrent creates can
+     * still derive the same value; the unique index is what actually guarantees
+     * uniqueness. See SequentialNumber for the shared algorithm.
      */
     private static function nextNumber(): string
     {
-        $highest = self::withTrashed()
-            ->whereNotNull('customer_number')
-            ->orderByRaw('LENGTH(customer_number) DESC, customer_number DESC')
-            ->value('customer_number');
-
-        $next = $highest === null
-            ? 1
-            : ((int) ltrim((string) preg_replace('/\D/', '', $highest), '0')) + 1;
-
-        return self::NUMBER_PREFIX.str_pad((string) $next, 6, '0', STR_PAD_LEFT);
+        return SequentialNumber::next(self::withTrashed(), 'customer_number', self::NUMBER_PREFIX);
     }
 
     /**
@@ -288,9 +281,8 @@ class Customer extends Model
             return $query;
         }
 
-        // Escape LIKE wildcards so a literal % or _ doesn't match everything.
-        $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\%', '\_'], $term);
-        $like = "%{$escaped}%";
+        // Wildcards escaped so a literal % or _ does not match everything.
+        $like = LikeSearch::contains($term);
 
         return $query->where(function (Builder $q) use ($like) {
             $q->where('name', 'like', $like)
