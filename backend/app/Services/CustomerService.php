@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\Note;
 use App\Models\Tag;
 use App\Models\User;
+use App\Support\SequentialNumber;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -27,11 +28,19 @@ class CustomerService
     public function create(array $data, User $actor): Customer
     {
         $customer = DB::transaction(function () use ($data, $actor) {
-            $customer = Customer::create([
-                ...$this->attributes($data),
-                // Default ownership to whoever created the record.
-                'owner_id' => $data['owner_id'] ?? $actor->id,
-            ]);
+            // Wrapped so two people creating a customer at the same instant do
+            // not collide on the generated customer_number — the loser retries
+            // with the next one. The model's creating hook regenerates it on
+            // each attempt. Inside the transaction on purpose: MySQL rolls back
+            // only the failed insert on a duplicate key, so the retry is clean.
+            $customer = SequentialNumber::retryOnCollision(
+                fn () => Customer::create([
+                    ...$this->attributes($data),
+                    // Default ownership to whoever created the record.
+                    'owner_id' => $data['owner_id'] ?? $actor->id,
+                ]),
+                'customer_number',
+            );
 
             if (isset($data['tags'])) {
                 $this->syncTags($customer, (array) $data['tags']);

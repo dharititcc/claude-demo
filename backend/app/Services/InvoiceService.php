@@ -46,7 +46,6 @@ class InvoiceService
 
             $invoice->forceFill([
                 'customer_id' => $customer->getKey(),
-                'number' => $this->nextNumber(),
                 'created_by' => $actor->id,
                 'issue_date' => $data['issue_date'] ?? now()->toDateString(),
                 'due_date' => $data['due_date'] ?? now()->addDays(30)->toDateString(),
@@ -54,7 +53,15 @@ class InvoiceService
                 'currency' => strtoupper((string) ($data['currency'] ?? $customer->currency ?? config('cashier.currency', 'usd'))),
                 'notes' => $data['notes'] ?? null,
                 'terms' => $data['terms'] ?? null,
-            ])->save();
+            ]);
+
+            // Assign the number and insert together, retrying if a concurrent
+            // create took the same one — the number is regenerated each attempt.
+            SequentialNumber::retryOnCollision(function () use ($invoice) {
+                $invoice->forceFill(['number' => $this->nextNumber()])->save();
+
+                return $invoice;
+            }, 'number');
 
             $this->replaceItems($invoice, $data['items'] ?? []);
 

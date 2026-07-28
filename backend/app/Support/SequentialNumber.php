@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Support;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\QueryException;
+use Throwable;
 
 /**
  * Generates the next prefixed, zero-padded number in a sequence (C-000001,
@@ -49,5 +51,69 @@ class SequentialNumber
             : ((int) ltrim((string) preg_replace('/\D/', '', (string) $highest), '0')) + 1;
 
         return $prefix.str_pad((string) $next, $pad, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Run an insert that assigns a generated number, retrying if a concurrent
+     * insert took the same one first.
+     *
+     * next() derives the number from the current maximum, so two requests that
+     * read the same maximum at the same instant generate the same number — one
+     * inserts, the other hits the unique index. The index is what guarantees
+     * uniqueness; this is what turns the loser's collision into a fresh number
+     * instead of a 500. Each retry re-runs the caller's insert, which regenerates
+     * the number against the now-higher maximum.
+     *
+     * Only a duplicate on the number column is retried. Any other failure — a
+     * different unique constraint, a real error — is rethrown at once. MySQL
+     * rolls back just the failed statement on a duplicate key, not the whole
+     * transaction, so retrying inside one is safe.
+     *
+     * @template TValue
+     *
+     * @param callable(): TValue $insert Creates the row; must regenerate the number each call.
+     * @param string $numberColumn The number column, so a collision elsewhere is not swallowed.
+     * @return TValue
+     *
+     * @throws QueryException when the collision persists past $attempts, or the
+     *                        failure is not a number collision.
+     */
+    public static function retryOnCollision(callable $insert, string $numberColumn, int $attempts = 3)
+    {
+        $attempts = max(1, $attempts);
+        $last = null;
+
+        for ($attempt = 1; $attempt <= $attempts; $attempt++) {
+            try {
+                return $insert();
+            } catch (QueryException $e) {
+                if (! self::isCollisionOn($e, $numberColumn)) {
+                    throw $e;
+                }
+
+                $last = $e;
+            }
+        }
+
+        // Exhausted the retries on a genuine run of collisions. The loop ran at
+        // least once and every path that reaches here set $last.
+        throw $last;
+    }
+
+    /**
+     * Whether the failure is a duplicate-key violation on the number column.
+     *
+     * Matches on the driver's message rather than the SQLSTATE alone: the index
+     * name embeds the column (…_number_unique), which is what distinguishes a
+     * number collision from a duplicate on some other unique column that must
+     * not be retried.
+     */
+    private static function isCollisionOn(Throwable $e, string $numberColumn): bool
+    {
+        $message = $e->getMessage();
+
+        $isDuplicate = $e->getCode() === '23000' || str_contains($message, 'Duplicate entry');
+
+        return $isDuplicate && str_contains($message, $numberColumn);
     }
 }
