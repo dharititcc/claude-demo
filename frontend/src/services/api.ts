@@ -3,8 +3,19 @@ import axios, {
   type AxiosInstance,
   type InternalAxiosRequestConfig,
 } from 'axios'
+import { isNativeApp } from '@/lib/platform'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
+
+// In the native app, "localhost" is the phone itself — a build that shipped
+// with the default would silently talk to nothing. Fail loudly at startup
+// instead, so the mistake is caught at build/QA rather than by a confused user.
+if (isNativeApp && /localhost|127\.0\.0\.1/.test(API_URL)) {
+  throw new Error(
+    `VITE_API_URL is "${API_URL}", which points at the device itself in the app. ` +
+      'Rebuild with VITE_API_URL set to the hosted API URL (https://…).',
+  )
+}
 
 const TOKEN_KEY = 'saas_token'
 const ORG_KEY = 'saas_active_org'

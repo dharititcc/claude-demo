@@ -13,7 +13,14 @@
       making precisely. frame-src must be stated explicitly: it would otherwise
       inherit default-src 'self' and block the card fields.
     -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://js.stripe.com; frame-src https://js.stripe.com https://hooks.stripe.com; connect-src 'self' %VITE_API_URL% https://api.stripe.com; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'" />
+    <!--
+      connect-src includes the Capacitor WebView origins (capacitor://localhost
+      on iOS, http(s)://localhost on Android) so the same bundle can reach the
+      API from inside the native shell. They are inert in a browser — the page
+      origin there is never one of these — so the web build is unaffected. The
+      hosted API is added via %VITE_API_URL%, substituted at build time.
+    -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://js.stripe.com; frame-src https://js.stripe.com https://hooks.stripe.com; connect-src 'self' %VITE_API_URL% https://api.stripe.com capacitor://localhost http://localhost https://localhost; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'" />
     <!-- Fallback only: each page sets its own title on mount (see usePageTitle). -->
     <title>SaaS Platform</title>
   </head>

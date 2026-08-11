@@ -193,7 +193,7 @@ export function DocumentsTab({ customerId }: { customerId: number }) {
                         variant="ghost"
                         size="icon"
                         aria-label={`Preview ${doc.name}`}
-                        onClick={() => fileService.preview(doc.id)}
+                        onClick={() => fileService.preview(doc.id, doc.name)}
                       >
                         <Eye size={15} />
                       </Button>
