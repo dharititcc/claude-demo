@@ -4,7 +4,19 @@ import { projectService } from '@/services/projects'
 import { useAuthStore } from '@/store/auth'
 import { Badge } from '@/components/ui/Badge'
 import { Card, CardContent } from '@/components/ui/Card'
-import { Spinner } from '@/components/ui/Spinner'
+import { SkeletonGroup, SkeletonTable, type SkeletonColumn } from '@/components/ui/Skeleton'
+
+// The tab tables share a tinted, small-caps header.
+const TAB_TABLE_HEAD = 'border-b bg-muted/40 text-left'
+
+// Project + task count, status pill, progress bar, starts, due.
+const PROJECT_COLUMNS: SkeletonColumn[] = [
+  { width: 'w-36', lines: 2, headerWidth: 'w-14' },
+  { badge: true, headerWidth: 'w-12' },
+  { width: 'w-24', headerWidth: 'w-16' },
+  { width: 'w-20', headerWidth: 'w-12' },
+  { width: 'w-20', headerWidth: 'w-8' },
+]
 import { formatDate } from '@/lib/date'
 import type { ProjectStatus } from '@/types'
 
@@ -48,9 +60,11 @@ export function ProjectsTab({ customerId }: { customerId: number }) {
 
   if (projects.isLoading) {
     return (
-      <div className="flex h-40 items-center justify-center">
-        <Spinner className="h-6 w-6" />
-      </div>
+      <Card className="overflow-hidden">
+        <SkeletonGroup label="Loading projects">
+          <SkeletonTable rows={4} columns={PROJECT_COLUMNS} headerClassName={TAB_TABLE_HEAD} />
+        </SkeletonGroup>
+      </Card>
     )
   }
 

@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { customerService } from '@/services/customers'
 import { apiErrorMessage } from './useAuth'
@@ -24,6 +24,10 @@ export function useCustomerContacts(customerId: number, params: { q?: string; st
   return useQuery({
     queryKey: contactKeys(orgSlug, customerId).list(params),
     queryFn: () => customerService.contacts(customerId, params),
+    // Typing in the search box changes the key; keep the last result on
+    // screen until the next arrives rather than dropping to a skeleton on
+    // every keystroke.
+    placeholderData: keepPreviousData,
     enabled: Boolean(orgSlug && customerId),
   })
 }

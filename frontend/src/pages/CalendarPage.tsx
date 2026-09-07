@@ -6,7 +6,7 @@ import { api } from '@/services/api'
 import { useAuthStore } from '@/store/auth'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { Spinner } from '@/components/ui/Spinner'
+import { CalendarGridSkeleton } from '@/components/skeletons/PageSkeletons'
 import { cn } from '@/lib/utils'
 import { bucketByDay } from '@/lib/calendar'
 import type { EventOccurrence, Task } from '@/types'
@@ -119,9 +119,7 @@ export default function CalendarPage() {
         </div>
 
         {events.isLoading || tasks.isLoading ? (
-          <div className="flex h-96 items-center justify-center">
-            <Spinner className="h-6 w-6" />
-          </div>
+          <CalendarGridSkeleton />
         ) : (
           <div className="grid grid-cols-7">
             {grid.map((day) => {

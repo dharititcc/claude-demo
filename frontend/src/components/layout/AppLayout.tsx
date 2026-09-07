@@ -23,7 +23,7 @@ import { useThemeStore } from '@/store/theme'
 import { useAuthStore } from '@/store/auth'
 import { useLogout, useOrgContext } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/Button'
-import { Spinner } from '@/components/ui/Spinner'
+import { SkeletonPage } from '@/components/ui/Skeleton'
 import { OrgSwitcher } from './OrgSwitcher'
 import { NotificationBell } from './NotificationBell'
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner'
@@ -191,13 +191,7 @@ export function AppLayout() {
 
         <main className="p-4 lg:p-6">
           {/* Boundary for lazily-loaded route chunks. */}
-          <Suspense
-            fallback={
-              <div className="flex h-64 items-center justify-center">
-                <Spinner className="h-6 w-6" />
-              </div>
-            }
-          >
+          <Suspense fallback={<SkeletonPage action label="Loading page" />}>
             <Outlet />
           </Suspense>
         </main>

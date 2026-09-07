@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils'
 import { useThemeStore } from '@/store/theme'
 import { useAuthStore } from '@/store/auth'
 import { Button } from '@/components/ui/Button'
-import { Spinner } from '@/components/ui/Spinner'
+import { SkeletonPage } from '@/components/ui/Skeleton'
 
 const navigation = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -125,13 +125,7 @@ export function AdminLayout() {
         </header>
 
         <main className="p-4 lg:p-8">
-          <Suspense
-            fallback={
-              <div className="flex min-h-[50vh] items-center justify-center">
-                <Spinner className="h-6 w-6" />
-              </div>
-            }
-          >
+          <Suspense fallback={<SkeletonPage label="Loading page" />}>
             <Outlet />
           </Suspense>
         </main>

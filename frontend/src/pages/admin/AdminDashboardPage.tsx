@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/Card'
-import { Spinner } from '@/components/ui/Spinner'
+import { AdminDashboardSkeleton } from '@/components/skeletons/AdminSkeletons'
 import { useAdminStats } from '@/hooks/useAdmin'
 import { metric } from '@/lib/adminFormat'
 import { usePageTitle } from '@/hooks/usePageTitle'
@@ -45,11 +45,7 @@ export default function AdminDashboardPage() {
   const { data: stats, isLoading, isError } = useAdminStats()
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <Spinner className="h-6 w-6" />
-      </div>
-    )
+    return <AdminDashboardSkeleton />
   }
 
   if (isError || !stats) {

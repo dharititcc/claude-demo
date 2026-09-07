@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import toast from 'react-hot-toast'
@@ -12,12 +12,27 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Spinner } from '@/components/ui/Spinner'
+import { Select, type SelectOption } from '@/components/ui/Select'
+import { SkeletonTableRows, type SkeletonColumn } from '@/components/ui/Skeleton'
 import { formatDate } from '@/lib/date'
 import type { Role } from '@/types'
 import { usePageTitle } from '@/hooks/usePageTitle'
 
-const ROLES: Role[] = ['owner', 'admin', 'manager', 'employee', 'viewer']
+// Name + email, role pill, last active, remove icon.
+const MEMBER_COLUMNS: SkeletonColumn[] = [
+  { width: 'w-36', lines: 2 },
+  { badge: true },
+  { width: 'w-20' },
+  { width: 'w-10', align: 'right' },
+]
+
+const ROLE_OPTIONS: Array<SelectOption & { value: Role }> = [
+  { value: 'owner', label: 'Owner', description: 'Full access, including billing' },
+  { value: 'admin', label: 'Admin', description: 'Manage team and settings' },
+  { value: 'manager', label: 'Manager', description: 'Manage customers and projects' },
+  { value: 'employee', label: 'Employee', description: 'Day-to-day work' },
+  { value: 'viewer', label: 'Viewer', description: 'Read only' },
+]
 
 const inviteSchema = z.object({
   email: z.string().min(1, 'Email is required.').email('Enter a valid email address.'),
@@ -92,6 +107,7 @@ export default function TeamPage() {
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
@@ -148,17 +164,20 @@ export default function TeamPage() {
               <label htmlFor="invite-role" className="mb-1.5 block text-sm font-medium">
                 Role
               </label>
-              <select
-                id="invite-role"
-                className="h-10 rounded-md border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                {...register('role')}
-              >
-                {ROLES.filter((r) => r !== 'owner' || can('billing.manage')).map((r) => (
-                  <option key={r} value={r}>
-                    {r}
-                  </option>
-                ))}
-              </select>
+              <Controller
+                name="role"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    id="invite-role"
+                    className="w-40"
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    options={ROLE_OPTIONS.filter((r) => r.value !== 'owner' || can('billing.manage'))}
+                  />
+                )}
+              />
             </div>
             <Button type="submit" className="mt-[26px]" loading={invite.isPending}>
               Send invite
@@ -180,11 +199,7 @@ export default function TeamPage() {
             </thead>
             <tbody className="divide-y">
               {members.isLoading ? (
-                <tr>
-                  <td colSpan={4} className="py-12 text-center">
-                    <Spinner className="mx-auto h-5 w-5" />
-                  </td>
-                </tr>
+                <SkeletonTableRows rows={4} columns={MEMBER_COLUMNS} />
               ) : (
                 members.data?.map((member) => {
                   const isSelf = member.id === currentUser?.id
@@ -199,18 +214,14 @@ export default function TeamPage() {
                       </td>
                       <td className="px-4 py-3">
                         {canManage && !isSelf ? (
-                          <select
+                          <Select
+                            size="sm"
+                            className="w-32"
                             value={member.role ?? ''}
-                            onChange={(e) => updateRole.mutate({ id: member.id, role: e.target.value as Role })}
+                            onChange={(role) => updateRole.mutate({ id: member.id, role: role as Role })}
+                            options={ROLE_OPTIONS}
                             aria-label={`Role for ${member.name}`}
-                            className="h-8 rounded-md border bg-background px-2 text-sm"
-                          >
-                            {ROLES.map((r) => (
-                              <option key={r} value={r}>
-                                {r}
-                              </option>
-                            ))}
-                          </select>
+                          />
                         ) : (
                           <Badge variant={member.is_owner ? 'default' : 'muted'}>
                             {member.role ?? '—'}

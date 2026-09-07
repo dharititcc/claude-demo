@@ -79,3 +79,51 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/*
+  Skeleton placeholders (components/ui/Skeleton.tsx).
+
+  The shimmer is a translated pseudo-element rather than an animated
+  background-position: transform runs on the compositor, so a page of forty
+  placeholders costs nothing on the main thread. The highlight is a few percent
+  of the foreground colour mixed over the muted base, which reads as a soft
+  sweep in both themes without a per-theme colour. A single shared keyframe
+  keeps every block in phase, so a grid shimmers as one surface instead of
+  twinkling.
+*/
+@keyframes skeleton-shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--color-muted);
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--color-foreground) 6%, transparent) 50%,
+    transparent 100%
+  );
+  animation: skeleton-shimmer 1.8s ease-in-out infinite;
+}
+
+/* No sweep at all under reduced motion: a stopped gradient would sit as a
+   static stripe across every block, so the highlight is removed entirely and
+   the flat muted block remains. */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    display: none;
+  }
+}

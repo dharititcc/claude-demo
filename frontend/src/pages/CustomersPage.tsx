@@ -10,13 +10,30 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
-import { Spinner } from '@/components/ui/Spinner'
+import { Select, type SelectOption } from '@/components/ui/Select'
+import { SkeletonTableRows, SkeletonText, type SkeletonColumn } from '@/components/ui/Skeleton'
 import { CustomerFormDialog } from '@/components/customers/CustomerFormDialog'
 import { formatDate } from '@/lib/date'
 import type { Customer, CustomerFilters, CustomerStatus } from '@/types'
 import { usePageTitle } from '@/hooks/usePageTitle'
 
-const STATUSES: Array<CustomerStatus | ''> = ['', 'lead', 'active', 'inactive', 'churned']
+// Name + email, company, status pill, value, date, action icons.
+const CUSTOMER_COLUMNS: SkeletonColumn[] = [
+  { width: 'w-36', lines: 2 },
+  { width: 'w-28' },
+  { badge: true },
+  { width: 'w-16' },
+  { width: 'w-20' },
+  { width: 'w-20', align: 'right' },
+]
+
+const STATUS_OPTIONS: SelectOption[] = [
+  { value: '', label: 'All statuses' },
+  { value: 'lead', label: 'Lead' },
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' },
+  { value: 'churned', label: 'Churned' },
+]
 
 const statusVariant: Record<CustomerStatus, 'success' | 'default' | 'warning' | 'danger'> = {
   active: 'success',
@@ -81,9 +98,11 @@ export default function CustomersPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Customers</h1>
-          <p className="text-sm text-muted-foreground">
-            {meta ? `${meta.total} total` : 'Loading…'}
-          </p>
+          {meta ? (
+            <p className="text-sm text-muted-foreground">{meta.total} total</p>
+          ) : (
+            <SkeletonText width="w-16" />
+          )}
         </div>
 
         <div className="flex gap-2">
@@ -125,21 +144,16 @@ export default function CustomersPage() {
           />
         </div>
 
-        <select
+        <Select
           value={status}
-          onChange={(e) => {
-            setStatus(e.target.value)
+          onChange={(v) => {
+            setStatus(v)
             setPage(1)
           }}
+          options={STATUS_OPTIONS}
           aria-label="Filter by status"
-          className="h-10 rounded-md border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          {STATUSES.map((s) => (
-            <option key={s || 'all'} value={s}>
-              {s === '' ? 'All statuses' : s}
-            </option>
-          ))}
-        </select>
+          className="w-40"
+        />
       </div>
 
       <Card className="overflow-hidden">
@@ -170,11 +184,7 @@ export default function CustomersPage() {
             </thead>
             <tbody className="divide-y">
               {isLoading ? (
-                <tr>
-                  <td colSpan={6} className="py-16 text-center">
-                    <Spinner className="mx-auto h-5 w-5" />
-                  </td>
-                </tr>
+                <SkeletonTableRows rows={10} columns={CUSTOMER_COLUMNS} />
               ) : customers.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-16 text-center text-muted-foreground">

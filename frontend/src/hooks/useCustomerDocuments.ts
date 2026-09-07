@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { customerService } from '@/services/customers'
 import { apiErrorMessage } from './useAuth'
@@ -20,6 +20,9 @@ export function useCustomerDocuments(customerId: number, category?: string) {
   return useQuery({
     queryKey: documentKeys(orgSlug, customerId).list(category),
     queryFn: () => customerService.documents(customerId, category),
+    // Switching category is a filter, not a navigation: keep the current list
+    // visible until the filtered one arrives instead of flashing a skeleton.
+    placeholderData: keepPreviousData,
     enabled: Boolean(orgSlug && customerId),
   })
 }

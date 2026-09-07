@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import toast from 'react-hot-toast'
@@ -13,10 +13,29 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Spinner } from '@/components/ui/Spinner'
+import { Select, type SelectOption } from '@/components/ui/Select'
+import { ProjectsGridSkeleton } from '@/components/skeletons/PageSkeletons'
 import { formatDate } from '@/lib/date'
 import type { Project, ProjectStatus } from '@/types'
 import { usePageTitle } from '@/hooks/usePageTitle'
+
+const STATUS_LABELS: Record<ProjectStatus, string> = {
+  planning: 'Planning',
+  active: 'Active',
+  on_hold: 'On hold',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+}
+
+// A new project cannot start out finished or abandoned.
+const CREATE_STATUS_OPTIONS: SelectOption[] = (['planning', 'active', 'on_hold'] as const).map(
+  (s) => ({ value: s, label: STATUS_LABELS[s] }),
+)
+
+const FILTER_STATUS_OPTIONS: SelectOption[] = [
+  { value: '', label: 'All statuses' },
+  ...(Object.keys(STATUS_LABELS) as ProjectStatus[]).map((s) => ({ value: s, label: STATUS_LABELS[s] })),
+]
 
 const statusVariant: Record<ProjectStatus, 'success' | 'default' | 'warning' | 'danger' | 'muted'> = {
   active: 'success',
@@ -67,6 +86,7 @@ export default function ProjectsPage() {
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
@@ -107,14 +127,20 @@ export default function ProjectsPage() {
             <div className="min-w-56 flex-1">
               <Input placeholder="Project name" error={errors.name?.message} {...register('name')} />
             </div>
-            <select
-              className="h-10 rounded-md border bg-background px-3 text-sm"
-              {...register('status')}
-            >
-              <option value="planning">Planning</option>
-              <option value="active">Active</option>
-              <option value="on_hold">On hold</option>
-            </select>
+            <Controller
+              name="status"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  className="w-36"
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  options={CREATE_STATUS_OPTIONS}
+                  aria-label="Status"
+                />
+              )}
+            />
             <Input type="date" className="w-40" {...register('due_on')} />
             <Button type="submit" loading={create.isPending}>
               Create
@@ -131,25 +157,17 @@ export default function ProjectsPage() {
           onChange={(e) => setSearch(e.target.value)}
           aria-label="Search projects"
         />
-        <select
+        <Select
           value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          className="h-10 rounded-md border bg-background px-3 text-sm"
+          onChange={setStatus}
+          options={FILTER_STATUS_OPTIONS}
+          className="w-40"
           aria-label="Filter by status"
-        >
-          <option value="">All statuses</option>
-          {['planning', 'active', 'on_hold', 'completed', 'cancelled'].map((s) => (
-            <option key={s} value={s}>
-              {s.replace('_', ' ')}
-            </option>
-          ))}
-        </select>
+        />
       </div>
 
       {projects.isLoading ? (
-        <div className="flex h-48 items-center justify-center">
-          <Spinner className="h-6 w-6" />
-        </div>
+        <ProjectsGridSkeleton />
       ) : projects.data?.data.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">

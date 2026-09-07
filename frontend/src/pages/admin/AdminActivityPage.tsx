@@ -2,7 +2,16 @@ import { useState } from 'react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
-import { Spinner } from '@/components/ui/Spinner'
+import { SkeletonGroup, SkeletonTable, type SkeletonColumn } from '@/components/ui/Skeleton'
+
+// When, action pill, organization, admin email, description.
+const ACTIVITY_COLUMNS: SkeletonColumn[] = [
+  { width: 'w-32', headerWidth: 'w-10' },
+  { badge: true, headerWidth: 'w-12' },
+  { width: 'w-28', headerWidth: 'w-20' },
+  { width: 'w-36', headerWidth: 'w-6' },
+  { width: 'w-48', headerWidth: 'w-10' },
+]
 import { useAdminActivity } from '@/hooks/useAdmin'
 import { formatDateTime } from '@/lib/adminFormat'
 import { usePageTitle } from '@/hooks/usePageTitle'
@@ -52,9 +61,9 @@ export default function AdminActivityPage() {
 
       <Card className="overflow-hidden">
         {isLoading ? (
-          <div className="flex min-h-[30vh] items-center justify-center">
-            <Spinner className="h-6 w-6" />
-          </div>
+          <SkeletonGroup label="Loading audit log">
+            <SkeletonTable rows={10} columns={ACTIVITY_COLUMNS} headerClassName="border-b text-left" />
+          </SkeletonGroup>
         ) : isError ? (
           <p className="p-6 text-sm text-destructive">Could not load the audit log.</p>
         ) : rows.length === 0 ? (

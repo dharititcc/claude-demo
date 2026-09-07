@@ -14,7 +14,9 @@ import { useAuthStore } from '@/store/auth'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Card, CardContent } from '@/components/ui/Card'
-import { Spinner } from '@/components/ui/Spinner'
+import { Select } from '@/components/ui/Select'
+import { SkeletonGroup, SkeletonText } from '@/components/ui/Skeleton'
+import { DocumentsListSkeleton } from '@/components/skeletons/CustomerTabSkeletons'
 import { formatDateTime } from '@/lib/date'
 import type { CustomerDocument, DocumentCategory } from '@/types'
 
@@ -103,18 +105,13 @@ export function DocumentsTab({ customerId }: { customerId: number }) {
             <label htmlFor="doc-category" className="sr-only">
               Category for the next upload
             </label>
-            <select
+            <Select
               id="doc-category"
               value={uploadCategory}
-              onChange={(e) => setUploadCategory(e.target.value as DocumentCategory)}
-              className="h-9 rounded-md border bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              {CATEGORIES.filter((c) => c.value).map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => setUploadCategory(v as DocumentCategory)}
+              options={CATEGORIES.filter((c) => c.value)}
+              className="h-9 w-36"
+            />
 
             <input
               ref={uploadInput}
@@ -151,9 +148,7 @@ export function DocumentsTab({ customerId }: { customerId: number }) {
       />
 
       {documents.isLoading ? (
-        <div className="flex h-40 items-center justify-center">
-          <Spinner className="h-6 w-6" />
-        </div>
+        <DocumentsListSkeleton />
       ) : documents.isError ? (
         <Card>
           <CardContent className="pt-6 text-center text-sm text-destructive">
@@ -252,7 +247,9 @@ export function DocumentsTab({ customerId }: { customerId: number }) {
                 {historyFor === doc.id && (
                   <div className="mt-3 rounded-md border bg-muted/30 p-3">
                     {versions.isLoading ? (
-                      <Spinner className="h-4 w-4" />
+                      <SkeletonGroup label="Loading versions">
+                        <SkeletonText size="xs" lines={2} widths={['w-72', 'w-64']} />
+                      </SkeletonGroup>
                     ) : (
                       <ul className="space-y-1 text-xs">
                         {(versions.data ?? []).map((v: CustomerDocument) => (

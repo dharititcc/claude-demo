@@ -21,7 +21,7 @@ import { apiErrorMessage } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Spinner } from '@/components/ui/Spinner'
+import { CustomerDetailSkeleton } from '@/components/skeletons/PageSkeletons'
 import { cn, safeHttpUrl } from '@/lib/utils'
 import { formatDateTime } from '@/lib/date'
 import { ContactsTab } from '@/components/customers/ContactsTab'
@@ -107,11 +107,7 @@ export default function CustomerDetailPage() {
   })
 
   if (isLoading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <Spinner className="h-6 w-6" />
-      </div>
-    )
+    return <CustomerDetailSkeleton />
   }
 
   if (isError || !customer) {

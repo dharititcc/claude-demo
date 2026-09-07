@@ -6,7 +6,7 @@ import { taskService } from '@/services/projects'
 import { useAuthStore } from '@/store/auth'
 import { apiErrorMessage } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/Button'
-import { Spinner } from '@/components/ui/Spinner'
+import { TasksBoardSkeleton } from '@/components/skeletons/PageSkeletons'
 import { KanbanColumn } from '@/components/tasks/KanbanColumn'
 import { TaskFormDialog } from '@/components/tasks/TaskFormDialog'
 import type { Task, TaskStatus } from '@/types'
@@ -75,14 +75,6 @@ export default function TasksPage() {
     setDragging(null)
   }
 
-  if (board.isLoading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <Spinner className="h-6 w-6" />
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -102,22 +94,26 @@ export default function TasksPage() {
         )}
       </div>
 
-      <div className="flex gap-4 overflow-x-auto pb-4">
-        {board.data?.map((column) => (
-          <KanbanColumn
-            key={column.status}
-            label={COLUMN_LABELS[column.status]}
-            column={column}
-            canDrag={can('tasks.update')}
-            onCardClick={(task) => {
-              setEditing(task)
-              setDialogOpen(true)
-            }}
-            onDragStart={setDragging}
-            onDrop={handleDrop}
-          />
-        ))}
-      </div>
+      {board.isLoading ? (
+        <TasksBoardSkeleton />
+      ) : (
+        <div className="flex gap-4 overflow-x-auto pb-4">
+          {board.data?.map((column) => (
+            <KanbanColumn
+              key={column.status}
+              label={COLUMN_LABELS[column.status]}
+              column={column}
+              canDrag={can('tasks.update')}
+              onCardClick={(task) => {
+                setEditing(task)
+                setDialogOpen(true)
+              }}
+              onDragStart={setDragging}
+              onDrop={handleDrop}
+            />
+          ))}
+        </div>
+      )}
 
       <TaskFormDialog
         open={dialogOpen}

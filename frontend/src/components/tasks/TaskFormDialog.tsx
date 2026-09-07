@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation } from '@tanstack/react-query'
@@ -9,7 +9,22 @@ import { taskService } from '@/services/projects'
 import { apiErrorMessage } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { Select, type SelectOption } from '@/components/ui/Select'
 import type { Task, TaskPayload } from '@/types'
+
+const STATUS_OPTIONS: SelectOption[] = [
+  { value: 'todo', label: 'To do' },
+  { value: 'in_progress', label: 'In progress' },
+  { value: 'review', label: 'Review' },
+  { value: 'done', label: 'Done' },
+]
+
+const PRIORITY_OPTIONS: SelectOption[] = [
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
+  { value: 'urgent', label: 'Urgent' },
+]
 
 const schema = z.object({
   title: z.string().min(1, 'A title is required.').max(255),
@@ -48,6 +63,7 @@ export function TaskFormDialog({
 }) {
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
@@ -159,31 +175,41 @@ export function TaskFormDialog({
               <label htmlFor="t-status" className="mb-1.5 block text-sm font-medium">
                 Status
               </label>
-              <select
-                id="t-status"
-                className="h-10 w-full rounded-md border bg-background px-3 text-sm"
-                {...register('status')}
-              >
-                <option value="todo">To do</option>
-                <option value="in_progress">In progress</option>
-                <option value="review">Review</option>
-                <option value="done">Done</option>
-              </select>
+              <Controller
+                name="status"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    id="t-status"
+                    className="w-full"
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    options={STATUS_OPTIONS}
+                    error={errors.status?.message}
+                  />
+                )}
+              />
             </div>
             <div>
               <label htmlFor="t-priority" className="mb-1.5 block text-sm font-medium">
                 Priority
               </label>
-              <select
-                id="t-priority"
-                className="h-10 w-full rounded-md border bg-background px-3 text-sm"
-                {...register('priority')}
-              >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="urgent">Urgent</option>
-              </select>
+              <Controller
+                name="priority"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    id="t-priority"
+                    className="w-full"
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    options={PRIORITY_OPTIONS}
+                    error={errors.priority?.message}
+                  />
+                )}
+              />
             </div>
           </div>
 

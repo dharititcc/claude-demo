@@ -1,12 +1,20 @@
 import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { Select, type SelectOption } from '@/components/ui/Select'
 import { useCreateCustomer, useUpdateCustomer } from '@/hooks/useCustomers'
 import type { Customer } from '@/types'
+
+const STATUS_OPTIONS: SelectOption[] = [
+  { value: 'lead', label: 'Lead' },
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' },
+  { value: 'churned', label: 'Churned' },
+]
 
 const schema = z.object({
   name: z.string().min(1, 'Name is required.').max(255),
@@ -93,6 +101,7 @@ export function CustomerFormDialog({
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
@@ -255,16 +264,21 @@ export function CustomerFormDialog({
               <label htmlFor="c-status" className="mb-1.5 block text-sm font-medium">
                 Status
               </label>
-              <select
-                id="c-status"
-                className="h-10 w-full rounded-md border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                {...register('status')}
-              >
-                <option value="lead">Lead</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-                <option value="churned">Churned</option>
-              </select>
+              <Controller
+                name="status"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    id="c-status"
+                    className="w-full"
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    options={STATUS_OPTIONS}
+                    error={errors.status?.message}
+                  />
+                )}
+              />
             </div>
             <div>
               <label htmlFor="c-ltv" className="mb-1.5 block text-sm font-medium">

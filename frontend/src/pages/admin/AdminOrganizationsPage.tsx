@@ -4,7 +4,22 @@ import { Search } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
-import { Spinner } from '@/components/ui/Spinner'
+import { Select, type SelectOption } from '@/components/ui/Select'
+import { SkeletonGroup, SkeletonTable, type SkeletonColumn } from '@/components/ui/Skeleton'
+
+// The admin tables use an uppercase, borderless header rather than the tinted one.
+const ADMIN_TABLE_HEAD = 'border-b text-left'
+
+// Organization + slug, owner + email, plan, status pill, users, projects, registered.
+const ORG_COLUMNS: SkeletonColumn[] = [
+  { width: 'w-36', lines: 2, headerWidth: 'w-24' },
+  { width: 'w-28', lines: 2 },
+  { width: 'w-16', headerWidth: 'w-10' },
+  { badge: true, headerWidth: 'w-12' },
+  { width: 'w-8', align: 'right', headerWidth: 'w-10' },
+  { width: 'w-8', align: 'right', headerWidth: 'w-14' },
+  { width: 'w-20', headerWidth: 'w-20' },
+]
 import { useDebounced } from '@/hooks/useDebounced'
 import { useAdminOrganizations } from '@/hooks/useAdmin'
 import { OrgStatusBadge } from '@/components/admin/OrgStatusBadge'
@@ -21,8 +36,19 @@ const STATUS_OPTIONS: Array<{ value: OrganizationStatus | ''; label: string }> =
   { value: 'cancelled', label: 'Cancelled' },
 ]
 
-const selectClass =
-  'h-10 rounded-md border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+const TRASHED_OPTIONS: SelectOption[] = [
+  { value: '', label: 'Live only' },
+  { value: 'with', label: 'Include deleted' },
+  { value: 'only', label: 'Deleted only' },
+]
+
+const SORT_OPTIONS: SelectOption[] = [
+  { value: '-created_at', label: 'Newest first' },
+  { value: 'created_at', label: 'Oldest first' },
+  { value: 'name', label: 'Name A–Z' },
+  { value: '-name', label: 'Name Z–A' },
+  { value: '-members_count', label: 'Most users' },
+]
 
 export default function AdminOrganizationsPage() {
   usePageTitle('Organizations · Admin')
@@ -84,50 +110,37 @@ export default function AdminOrganizationsPage() {
           />
         </div>
 
-        <select
-          className={selectClass}
+        <Select
+          className="w-40"
           value={status}
-          onChange={(e) => onFilterChange(setStatus)(e.target.value as OrganizationStatus | '')}
+          onChange={(v) => onFilterChange(setStatus)(v as OrganizationStatus | '')}
+          options={STATUS_OPTIONS}
           aria-label="Filter by status"
-        >
-          {STATUS_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+        />
 
-        <select
-          className={selectClass}
+        <Select
+          className="w-40"
           value={trashed}
-          onChange={(e) => onFilterChange(setTrashed)(e.target.value as '' | 'with' | 'only')}
+          onChange={(v) => onFilterChange(setTrashed)(v as '' | 'with' | 'only')}
+          options={TRASHED_OPTIONS}
           aria-label="Include deleted"
-        >
-          <option value="">Live only</option>
-          <option value="with">Include deleted</option>
-          <option value="only">Deleted only</option>
-        </select>
+        />
 
-        <select
-          className={selectClass}
+        <Select
+          className="w-40"
           value={sort}
-          onChange={(e) => onFilterChange(setSort)(e.target.value)}
+          onChange={onFilterChange(setSort)}
+          options={SORT_OPTIONS}
           aria-label="Sort by"
-        >
-          <option value="-created_at">Newest first</option>
-          <option value="created_at">Oldest first</option>
-          <option value="name">Name A–Z</option>
-          <option value="-name">Name Z–A</option>
-          <option value="-members_count">Most users</option>
-        </select>
+        />
       </div>
 
       {/* Table */}
       <Card className="overflow-hidden">
         {isLoading ? (
-          <div className="flex min-h-[30vh] items-center justify-center">
-            <Spinner className="h-6 w-6" />
-          </div>
+          <SkeletonGroup label="Loading organizations">
+            <SkeletonTable rows={8} columns={ORG_COLUMNS} headerClassName={ADMIN_TABLE_HEAD} />
+          </SkeletonGroup>
         ) : isError ? (
           <p className="p-6 text-sm text-destructive">Could not load organizations.</p>
         ) : rows.length === 0 ? (

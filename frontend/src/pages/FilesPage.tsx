@@ -7,7 +7,8 @@ import { useAuthStore } from '@/store/auth'
 import { apiErrorMessage } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { Spinner } from '@/components/ui/Spinner'
+import { SkeletonText } from '@/components/ui/Skeleton'
+import { FilesListSkeleton } from '@/components/skeletons/PageSkeletons'
 import type { UsageMetric } from '@/types'
 import { usePageTitle } from '@/hooks/usePageTitle'
 
@@ -121,11 +122,13 @@ export default function FilesPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Files</h1>
-          {storage && (
+          {storage ? (
             <p className="text-sm text-muted-foreground">
               {storage.used} MB used
               {storage.limit !== null && ` of ${storage.limit} MB`}
             </p>
+          ) : (
+            listing.isLoading && <SkeletonText width="w-36" />
           )}
         </div>
         {can('files.upload') && (
@@ -180,9 +183,7 @@ export default function FilesPage() {
 
       <Card className="overflow-hidden">
         {listing.isLoading ? (
-          <div className="flex h-48 items-center justify-center">
-            <Spinner className="h-6 w-6" />
-          </div>
+          <FilesListSkeleton />
         ) : (
           <ul className="divide-y">
             {listing.data?.data.folders.map((folder) => (

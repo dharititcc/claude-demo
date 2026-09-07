@@ -17,7 +17,7 @@ import { api } from '@/services/api'
 import { useAuthStore } from '@/store/auth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
-import { Spinner } from '@/components/ui/Spinner'
+import { DashboardSkeleton } from '@/components/skeletons/PageSkeletons'
 import { formatDate } from '@/lib/date'
 import type { DashboardStats } from '@/types'
 import { usePageTitle } from '@/hooks/usePageTitle'
@@ -98,11 +98,7 @@ export default function DashboardPage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <Spinner className="h-6 w-6" />
-      </div>
-    )
+    return <DashboardSkeleton />
   }
 
   if (isError || !data) {

@@ -6,7 +6,18 @@ import { PlanFormDialog } from '@/components/admin/PlanFormDialog'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
-import { Spinner } from '@/components/ui/Spinner'
+import { SkeletonGroup, SkeletonTable, type SkeletonColumn } from '@/components/ui/Skeleton'
+
+// Plan + slug, monthly/annual price, limits, Stripe flags, org count, status, actions.
+const PLAN_COLUMNS: SkeletonColumn[] = [
+  { width: 'w-28', lines: 2, headerWidth: 'w-10' },
+  { width: 'w-20', lines: 2, headerWidth: 'w-10' },
+  { width: 'w-24', lines: 2, headerWidth: 'w-12' },
+  { width: 'w-16', lines: 2, headerWidth: 'w-12' },
+  { width: 'w-6', headerWidth: 'w-8' },
+  { badge: true, headerWidth: 'w-12' },
+  { width: 'w-20', align: 'right', headerWidth: 'w-14' },
+]
 import { metric } from '@/lib/adminFormat'
 import type { AdminPlan } from '@/types/admin'
 
@@ -71,9 +82,9 @@ export default function AdminPlansPage() {
 
       <Card className="overflow-hidden">
         {plans.isLoading ? (
-          <div className="flex h-64 items-center justify-center">
-            <Spinner className="h-6 w-6" />
-          </div>
+          <SkeletonGroup label="Loading plans">
+            <SkeletonTable rows={4} columns={PLAN_COLUMNS} />
+          </SkeletonGroup>
         ) : plans.isError ? (
           <p className="p-6 text-sm text-destructive">Could not load the plans.</p>
         ) : (plans.data ?? []).length === 0 ? (

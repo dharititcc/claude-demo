@@ -4,7 +4,7 @@ import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-
 import toast from 'react-hot-toast'
 import { X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Spinner } from '@/components/ui/Spinner'
+import { PaymentFormSkeleton } from '@/components/skeletons/PageSkeletons'
 import { billingService } from '@/services/billing'
 import { apiErrorMessage } from '@/hooks/useAuth'
 import { useAuthStore } from '@/store/auth'
@@ -99,9 +99,7 @@ export function SubscribeDialog({
             Card payments are not configured. Set VITE_STRIPE_KEY to enable them.
           </p>
         ) : intent.isLoading ? (
-          <div className="flex h-40 items-center justify-center">
-            <Spinner className="h-6 w-6" />
-          </div>
+          <PaymentFormSkeleton />
         ) : intent.isError || !intent.data ? (
           <p className="py-6 text-center text-sm text-destructive">
             {apiErrorMessage(intent.error, 'Could not start checkout. Please try again.')}

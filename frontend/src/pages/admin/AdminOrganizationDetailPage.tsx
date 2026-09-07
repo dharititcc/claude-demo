@@ -2,7 +2,7 @@ import { ArrowLeft, Ban, CheckCircle2, RotateCcw, Trash2, UserCog } from 'lucide
 import { Link, useParams } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Spinner } from '@/components/ui/Spinner'
+import { AdminOrgDetailSkeleton } from '@/components/skeletons/AdminSkeletons'
 import {
   useActivateOrganization,
   useAdminOrganization,
@@ -42,11 +42,7 @@ export default function AdminOrganizationDetailPage() {
   usePageTitle(org ? `${org.name} · Admin` : 'Admin')
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <Spinner className="h-6 w-6" />
-      </div>
-    )
+    return <AdminOrgDetailSkeleton />
   }
 
   if (isError || !org) {

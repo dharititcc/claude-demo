@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
 import { Card, CardContent } from '@/components/ui/Card'
-import { Spinner } from '@/components/ui/Spinner'
+import { ContactsGridSkeleton } from '@/components/skeletons/CustomerTabSkeletons'
 import { ContactFormDialog } from './ContactFormDialog'
 import type { CustomerContact } from '@/types'
 
@@ -75,9 +75,7 @@ export function ContactsTab({ customerId }: { customerId: number }) {
       </div>
 
       {contacts.isLoading ? (
-        <div className="flex h-40 items-center justify-center">
-          <Spinner className="h-6 w-6" />
-        </div>
+        <ContactsGridSkeleton />
       ) : contacts.isError ? (
         <Card>
           <CardContent className="pt-6 text-center text-sm text-destructive">

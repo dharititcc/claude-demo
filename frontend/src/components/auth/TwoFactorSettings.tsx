@@ -6,6 +6,7 @@ import { ShieldCheck, ShieldOff } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
+import { SkeletonButton, SkeletonGroup } from '@/components/ui/Skeleton'
 import { authService } from '@/services/auth'
 import { apiErrorMessage } from '@/hooks/useAuth'
 import { formatDate } from '@/lib/date'
@@ -121,7 +122,13 @@ export default function TwoFactorSettings() {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {status.isPending && <p className="text-sm text-muted-foreground">Loading…</p>}
+        {/* The resolved state is a single button either way (enable, or the
+            manage row), so a button-sized block holds its place. */}
+        {status.isPending && (
+          <SkeletonGroup label="Loading two-factor status">
+            <SkeletonButton width="w-40" />
+          </SkeletonGroup>
+        )}
 
         {/* Freshly issued codes take over the card — they cannot be recovered
             from anywhere else once dismissed. */}

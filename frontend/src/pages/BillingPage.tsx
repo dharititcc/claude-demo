@@ -8,7 +8,8 @@ import { apiErrorMessage } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Spinner } from '@/components/ui/Spinner'
+import { SkeletonGroup, SkeletonList } from '@/components/ui/Skeleton'
+import { BillingSkeleton } from '@/components/skeletons/PageSkeletons'
 import { SubscribeDialog } from '@/components/billing/SubscribeDialog'
 import { cn, safeHttpUrl } from '@/lib/utils'
 import { formatDate } from '@/lib/date'
@@ -114,11 +115,7 @@ export default function BillingPage() {
   })
 
   if (overview.isLoading || plans.isLoading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <Spinner className="h-6 w-6" />
-      </div>
-    )
+    return <BillingSkeleton />
   }
 
   if (!overview.data || !plans.data) {
@@ -326,7 +323,11 @@ export default function BillingPage() {
             <CardTitle>Invoices</CardTitle>
           </CardHeader>
           <CardContent>
-            {!invoices.data?.length ? (
+            {invoices.isLoading ? (
+              <SkeletonGroup label="Loading invoices">
+                <SkeletonList rows={3} trailing="button" itemClassName="py-3" />
+              </SkeletonGroup>
+            ) : !invoices.data?.length ? (
               <p className="py-6 text-center text-sm text-muted-foreground">No invoices yet.</p>
             ) : (
               <ul className="divide-y">

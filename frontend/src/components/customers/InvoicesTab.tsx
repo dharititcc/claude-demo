@@ -11,7 +11,17 @@ import { useAuthStore } from '@/store/auth'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Card, CardContent } from '@/components/ui/Card'
-import { Spinner } from '@/components/ui/Spinner'
+import { SkeletonGroup, SkeletonTable, type SkeletonColumn } from '@/components/ui/Skeleton'
+
+// Number + issued, status pill, due, total, balance, action icons.
+const INVOICE_COLUMNS: SkeletonColumn[] = [
+  { width: 'w-28', lines: 2, headerWidth: 'w-12' },
+  { badge: true, headerWidth: 'w-12' },
+  { width: 'w-20', headerWidth: 'w-8' },
+  { width: 'w-16', align: 'right', headerWidth: 'w-10' },
+  { width: 'w-16', align: 'right', headerWidth: 'w-14' },
+  { width: 'w-24', align: 'right', headerWidth: 'w-14' },
+]
 import { formatDate } from '@/lib/date'
 import { InvoiceFormDialog } from './InvoiceFormDialog'
 import type { Invoice, InvoiceDisplayStatus } from '@/types'
@@ -113,9 +123,11 @@ export function InvoicesTab({ customerId, currency }: { customerId: number; curr
       </div>
 
       {invoices.isLoading ? (
-        <div className="flex h-40 items-center justify-center">
-          <Spinner className="h-6 w-6" />
-        </div>
+        <Card className="overflow-hidden">
+          <SkeletonGroup label="Loading invoices">
+            <SkeletonTable rows={4} columns={INVOICE_COLUMNS} />
+          </SkeletonGroup>
+        </Card>
       ) : invoices.isError ? (
         <Card>
           <CardContent className="pt-6 text-center text-sm text-destructive">

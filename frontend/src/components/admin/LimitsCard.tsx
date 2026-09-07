@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
+import { Select, type SelectOption } from '@/components/ui/Select'
 import { useUpdateLimits } from '@/hooks/useAdmin'
 import type { AdminLimits, LimitOverrides } from '@/types/admin'
 
@@ -11,6 +12,12 @@ const KEYS: Array<{ key: string; label: string }> = [
   { key: 'users', label: 'Users' },
   { key: 'customers', label: 'Customers' },
   { key: 'storage_mb', label: 'Storage (MB)' },
+]
+
+const MODE_OPTIONS: SelectOption[] = [
+  { value: 'plan', label: 'Use plan' },
+  { value: 'number', label: 'Set to…' },
+  { value: 'unlimited', label: 'Unlimited' },
 ]
 
 function limitText(value: number | null): string {
@@ -126,18 +133,15 @@ function LimitsEditor({
               </span>
             </span>
             <div className="flex items-center gap-2">
-              <select
-                className="h-9 rounded-md border bg-background px-2 text-sm"
+              <Select
+                className="h-9 w-32"
                 value={s.mode}
-                onChange={(e) =>
-                  setState((st) => ({ ...st, [key]: { ...st[key], mode: e.target.value as typeof s.mode } }))
+                onChange={(mode) =>
+                  setState((st) => ({ ...st, [key]: { ...st[key], mode: mode as typeof s.mode } }))
                 }
+                options={MODE_OPTIONS}
                 aria-label={`${label} override mode`}
-              >
-                <option value="plan">Use plan</option>
-                <option value="number">Set to…</option>
-                <option value="unlimited">Unlimited</option>
-              </select>
+              />
               {s.mode === 'number' && (
                 <Input
                   type="number"

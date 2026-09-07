@@ -9,7 +9,7 @@ import { useAuthStore } from '@/store/auth'
 import { apiErrorMessage } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
-import { Spinner } from '@/components/ui/Spinner'
+import { AcceptInvitationSkeleton } from '@/components/skeletons/PageSkeletons'
 import { formatDate } from '@/lib/date'
 import { usePageTitle } from '@/hooks/usePageTitle'
 
@@ -54,11 +54,7 @@ export default function AcceptInvitationPage() {
   })
 
   if (preview.isLoading) {
-    return (
-      <div className="flex min-h-svh items-center justify-center">
-        <Spinner className="h-6 w-6" />
-      </div>
-    )
+    return <AcceptInvitationSkeleton />
   }
 
   if (preview.isError || !preview.data) {

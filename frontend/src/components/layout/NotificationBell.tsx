@@ -4,6 +4,7 @@ import { Bell, Check } from 'lucide-react'
 import { api } from '@/services/api'
 import { useAuthStore } from '@/store/auth'
 import { Button } from '@/components/ui/Button'
+import { SkeletonGroup, SkeletonText } from '@/components/ui/Skeleton'
 import { cn } from '@/lib/utils'
 import { formatDateTime } from '@/lib/date'
 
@@ -87,7 +88,19 @@ export function NotificationBell() {
             </div>
 
             <div className="max-h-80 overflow-y-auto">
-              {items.length === 0 ? (
+              {notifications.isLoading ? (
+                <SkeletonGroup label="Loading notifications">
+                  <ul className="divide-y" aria-hidden>
+                    {[0, 1, 2].map((i) => (
+                      <li key={i} className="px-3 py-2.5">
+                        <SkeletonText width={i % 2 ? 'w-32' : 'w-40'} />
+                        <SkeletonText size="xs" width="w-24" />
+                        <SkeletonText size="xs" width="w-28" className="mt-0.5" />
+                      </li>
+                    ))}
+                  </ul>
+                </SkeletonGroup>
+              ) : items.length === 0 ? (
                 <p className="py-8 text-center text-sm text-muted-foreground">You're all caught up.</p>
               ) : (
                 <ul className="divide-y">
